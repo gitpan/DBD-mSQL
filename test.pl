@@ -218,6 +218,9 @@ print "Re-testing: \$cursor->finish\n";
     and print( "\tok\n" )
     or print "\tnot ok: $DBI::errstr\n";
 
+# Temporary bug-plug
+undef $cursor;
+
 ### Test whether or not a field containing a NULL is returned correctly
 ### as undef, or something much more bizarre
 print "Testing: \$cursor->do( 'INSERT INTO $testtable VALUES ( NULL, 'NULL-valued ID' )' )\n";
@@ -248,12 +251,22 @@ print "Testing: \$cursor->finish\n";
     and print "\tok\n"
     or print "\tnot ok\n";
 
+# Temporary bug-plug
+undef $cursor;
+
 ### Delete the test row from the table
 $rv = 
     $dbh->do( "DELETE FROM $testtable WHERE id = NULL AND name = 'NULL-valued id'" );
 
 ### Test the new funky routines to list the fields applicable to a SELECT
 ### statement, and not necessarily just those in a table...
+print "Re-testing: \$cursor = \$dbh->prepare( 'SELECT * FROM $testtable' )\n";
+( $cursor = $dbh->prepare( "SELECT * FROM $testtable" ) )
+    and print "\tok\n"
+    or die "\tnot ok: $DBI::errstr\n";
+
+$cursor->execute;
+
 print "Testing: \$cursor->func( '_ListSelectedFields' )\n";
 ( $ref = $cursor->func( '_ListSelectedFields' ) )
     and print( "\tok\n" )

@@ -308,7 +308,6 @@ dbd_st_execute( h, imp_sth )
      */
 //    fprintf( stderr, "imp_sth->done_execute: %d\n", imp_sth->done_execute );
     if ( imp_sth->done_execute == 1 ) {
-        warn( "Returning!\n" );
         return 0;
       }
     imp_sth->done_execute = 1;
