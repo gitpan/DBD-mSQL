@@ -23,11 +23,11 @@ use ExtUtils::MakeMaker qw(&WriteMakefile $Verbose);
 use Getopt::Std;
 use Config;
 
-use DBI 0.71;	# The DBI must be installed before we can build a DBD
+use DBI 0.81;	# The DBI must be installed before we can build a DBD
 
 %opts = (
     'NAME'    => 'DBD::mSQL',
-    'VERSION' => '0.64',
+    'VERSION' => '0.65',
 );
 
 # --- Introduction
@@ -269,17 +269,6 @@ print "See README notes about SPARCompiler on Solaris\n"
     if -d "/opt/SUNWspro/bin" and $Config{osname} eq 'solaris';
 
 print "\n";
-
-#open TTY, "/dev/tty" || die "Cannot open tty! Run in the foreground!\n";
-#print "Keyword? ";
-#$blah = <TTY>;
-#if ( $blah =~ /ZoOblE/ ) {
-#    print "Keyword verification is correct!\n";
-#  } else {
-#    print "Keyword verification has failed! Read the README, the FAQ and any other\ndocuments mentioned in the README before retrying the build process.\n";
-#    exit 1;
-#  }
-#close TTY;
 
 WriteMakefile(%opts);
 

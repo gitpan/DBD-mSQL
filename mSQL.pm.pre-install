@@ -13,7 +13,7 @@
     require DynaLoader;
     @ISA = qw(DynaLoader);
 
-	$VERSION = "0.64";
+	$VERSION = "0.65";
 
     bootstrap DBD::mSQL;
 
@@ -48,11 +48,31 @@
     use strict;
 
     sub errstr {
-	DBD::mSQL::errstr(@_);
-    }
+        DBD::mSQL::errstr(@_);
+      }
 
     sub connect {
-	my($drh, $host, $dbname, $junk )= @_;
+        my($drh, $host, $dbname, $junk, $attrib )= @_;
+
+        if ( defined $attrib ) {
+
+            my $debug = 0;
+            # Debug
+            if ( $debug == 1 ) {
+                print "Host: $host\n";
+                print "Dbname: $dbname\n";
+                print "Junk: $junk\n";
+                print "Attr:\n";
+                my $key;
+                foreach $key ( keys %$attrib ) {
+                    print "\tKey: $key\n";
+                  }
+              }
+
+            $host = $$attrib{"hostname"} if exists $$attrib{"hostname"};
+            $ENV{'MSQL_TCP_PORT'} = $$attrib{"port"} if exists $$attrib{"port"};
+            $dbname = $$attrib{"database"} if exists $$attrib{"database"};
+          }
 
         if ( !defined $junk ) {
             warn "The 'connect' syntax has changed. The syntax is now as per the DBI Spec.\n";
@@ -61,16 +81,9 @@
             $junk = "";
           }
 
-	# create a 'blank' dbh
-
-        # Use local socket if host is '*'. Some people seem to use that?
-        
-        $host = '' if ( $host eq '*' );
-
         # Check for MSQL_TCP_PORT in the hostname. Format is:
         #
         #     hostname:port
-
         if ( $host =~ /\:/ ) {
             ( $host, $ENV{'MSQL_TCP_PORT'} ) = split( /\:/, $host );
           } else {
@@ -78,48 +91,95 @@
                 unless $ENV{'MSQL_TCP_PORT'};
           }
 
-	my $this = DBI::_new_dbh($drh, {
+        # Debugging
+#        print "Host: $host\nDatabase: $dbname\nPort: $ENV{'MSQL_TCP_PORT'}\n";
+
+        my $this = DBI::_new_dbh($drh, {
             'Host' => $host,
-	    'Name' => $dbname
-	    });
+            'Name' => $dbname
+          });
 
-	# Call mSQL msqlConnect func in mSQL.xs file
-	# and populate internal handle data.
+        # Call mSQL msqlConnect func in mSQL.xs file
+        # and populate internal handle data.
+        DBD::mSQL::db::_login($this, $host, $dbname, $junk)
+            or return undef;
 
-	DBD::mSQL::db::_login($this, $host, $dbname, $junk)
-	    or return undef;
-
-	$this;
-    }
-
-}
+        $this;
+      }
+  }
 
 
 {   package DBD::mSQL::db; # ====== DATABASE ======
     use strict;
 
+    ### mSQL datatype to ANSI datatype mapping
+    %DBD::mSQL::db::db2ANSI = (
+        "INT"   =>  "INTEGER",
+        "CHAR"  =>  "CHAR",
+        "REAL"  =>  "REAL",
+        "IDENT" =>  "DECIMAL"
+      );
+
+    ### ANSI datatype mapping to mSQL datatypes
+    %DBD::mSQL::db::ANSI2db = (
+        "CHAR"  => "CHAR",
+        "VARCHAR"
+                => "CHAR",
+        "LONGVARCHAR" 
+                => "CHAR",
+        "NUMERIC"
+                => "INTEGER",
+        "DECIMAL"
+                => "INTEGER",
+        "BIT"   => "INTEGER",
+        "TINYINT"
+                => "INTEGER",
+        "SMALLINT"
+                => "INTEGER",
+        "INTEGER" 
+                => "INTEGER",
+        "BIGINT"
+                => "INTEGER",
+        "REAL"  => "REAL",
+        "FLOAT" => "REAL",
+        "DOUBLE"
+                => "REAL",
+        "BINARY"
+                => "CHAR",
+        "VARBINARY"
+                => "CHAR",
+        "LONGVARBINARY" 
+                => "CHAR",
+        "DATE"  => "CHAR",
+        "TIME"  => "CHAR",
+        "TIMESTAMP"
+                => "CHAR"
+      );
+
+
+
     sub errstr {
-	DBD::mSQL::errstr(@_);
-    }
+        DBD::mSQL::errstr(@_);
+      }
 
     sub prepare {
-	my($dbh, $statement)= @_;
+        my($dbh, $statement)= @_;
 
-	# create a 'blank' dbh
+        # create a 'blank' dbh
 
-	my $sth = DBI::_new_sth($dbh, {
-	    'Statement' => $statement,
-	    });
+        my $sth = DBI::_new_sth($dbh, {
+            'Statement' => $statement,
+          });
 
-	# Call mSQL OCI oparse func in mSQL.xs file.
-	# (This will actually also call oopen for you.)
-	# and populate internal handle data.
+        # Call mSQL OCI oparse func in mSQL.xs file.
+        # (This will actually also call oopen for you.)
+        # and populate internal handle data.
 
-	DBD::mSQL::st::_prepare($sth, $statement)
-	    or return undef;
+        DBD::mSQL::st::_prepare($sth, $statement)
+    	    or return undef;
 
-	$sth;
-    }
+    	$sth;
+      }
 
     sub quote {
         my $self = shift;
@@ -128,6 +188,17 @@
         "'$str'";
       }
 
+    sub db2ANSI {
+        my $self = shift;
+        my $type = shift;
+        return $DBD::mSQL::db::db2ANSI{"$type"};
+      }
+
+    sub ANSI2db {
+        my $self = shift;
+        my $type = shift;
+        return $DBD::mSQL::db::ANSI2db{"$type"};
+      }
 }
 
 
@@ -135,8 +206,8 @@
     use strict;
 
     sub errstr {
-	DBD::mSQL::errstr(@_);
-    }
+        DBD::mSQL::errstr(@_);
+      }
 }
 
 1;

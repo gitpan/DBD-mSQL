@@ -9,10 +9,12 @@ README
 README.Msqlperl
 dbdimp.c
 dbdimp.h
+extratests/connectattr.pl
 extratests/connectspec.pl
 extratests/createdrop.pl
 extratests/cursortest.pl
 extratests/doerrortest.pl
+extratests/metatest.pl
 extratests/nulltest.pl
 extratests/preparetest.pl
 extratests/quotetest.pl

@@ -1,4 +1,27 @@
 
+0.65
+
+    o Fixed broken connect() error status problems. If the connection
+      failed, it wouldn't flag the error correctly.
+    o Added $sth->{NAME} handling. This is a temporary solution being
+      worked on in conjunction with the general DBI metadata issue.
+    o Added support for optional %attr hash in DBI->connect() method.
+      The additional parameters of interest to DBD::mSQL are:
+
+        %connectHash = ( 
+            "hostname"  => 'localhost',
+            "dbname"    => 'dbname',
+            "port"      => '1112'
+          );
+
+      And can be used as:
+
+        $dbh = DBI->connect( '', '', '', 'mSQL', \%connectHash );
+
+      The hash contents will override the supplied standard arguments.
+    o Added ANSI -> mSQL and mSQL -> ANSI datatype mapping hashes, which 
+      will be used as the DBI metadata issues become resolved.
+
 0.64
 
     o Fixed return values from $sth->execute. It now correctly returns

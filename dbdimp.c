@@ -52,20 +52,22 @@ dbd_db_login( dbh, host, dbname, junk )
 {
     D_imp_dbh(dbh);
 
-/*    printf( "%s:%d: dbd_db_login: %s\n", __FILE__, __LINE__, dbname ); */
+/*    printf( "%s:%d: dbd_db_login: %s, %s\n", 
+            __FILE__, __LINE__, 
+            host, dbname ); */
 
     if (host && !*host) host = 0;    /* Patch by Sven Verdoolaege */
     imp_dbh->lda.svsock = msqlConnect( host ); 
 
     if ( imp_dbh->lda.svsock == -1 ) {
         do_mSQL_error( (sb2)( imp_dbh->lda.rc ), msqlErrMsg );
-        return -1;
+        return 0;
       } 
 
     if ( strlen( dbname ) != 0 ) {
         if ( msqlSelectDB( imp_dbh->lda.svsock, dbname ) == -1 ) {
             do_mSQL_error( (sb2)(imp_dbh->lda.rc ), msqlErrMsg );
-            return -1;
+            return 0;
           } 
       }
     /** Dump the information we have into the Lda_Def */
@@ -289,7 +291,7 @@ dbd_st_prepare(sth, statement, attribs)
     imp_sth->statement = (char *)malloc( strlen( statement ) + 1 );
     memcpy( imp_sth->statement, statement, strlen( statement ) );
     imp_sth->statement[strlen( statement )] = '\0';
-   
+
     DBIc_IMPSET_on(imp_sth);
     return 1;
 }
@@ -448,7 +450,7 @@ dbd_describe(h, imp_sth)
     msqlFieldSeek(imp_sth->cda,0);
 
     /* allocate field buffers    */
-    Newz(42, imp_sth->fbh,      imp_sth->fbh_num, imp_fbh_t);
+    Newz(42, imp_sth->fbh, imp_sth->fbh_num, imp_fbh_t);
     /* allocate a buffer to hold all the column names */
     Newz(42, imp_sth->fbh_cbuf, t_cbufl + imp_sth->fbh_num, char);
       
@@ -456,10 +458,15 @@ dbd_describe(h, imp_sth)
       
     cur = msqlFetchRow( imp_sth->cda );
 
-    /* Foreach row, we need to allocate some space and link the
-     * - header record to it */
+    /** Set the number of fields within the handle */
+/*    fprintf( stderr, "imp_sth->fbh_num: %d\n", imp_sth->fbh_num ); */
+    DBIc_NUM_FIELDS( imp_sth ) = imp_sth->fbh_num;
 
-    for(i = 0 ; i <  imp_sth->fbh_num /* && imp_sth->cda->rc!=10 */ ; ++i ) {
+    /**
+     * Foreach row, we need to allocate some space and link the
+     * header record to it 
+     */
+    for( i = 0 ; i < imp_sth->fbh_num ; ++i ) {
         imp_fbh_t *fbh = &imp_sth->fbh[i];
         fbh->imp_sth = imp_sth;
         fbh->cbuf    = cbuf_ptr;
@@ -615,5 +622,39 @@ dbd_st_FETCH(sth, keysv)
     SV *keysv;
 {
     D_imp_sth(sth);
-    return sv_2mortal(NULL);
+    STRLEN keyLength;
+    char *key = SvPV( keysv, keyLength );
+    int numFields,
+        i;
+    SV *retsv = NULL;
+
+    /** Grab the number of fields from the statement handle */
+    numFields = i = DBIc_NUM_FIELDS( imp_sth );
+/*    fprintf( stderr, "numFields: %d\n", numFields );
+
+    fprintf( stderr, "kl: %d\tkey: %s\n", keyLength, key ); */
+
+    /** Return a reference to an array of the column names */
+    if ( keyLength == 4 && strEQ( key, "NAME" ) ) {
+        AV *av = newAV();
+        m_field *field = msqlFetchField( imp_sth->cda );
+
+        if ( field == NULL ) {
+/*            fprintf( stderr, "Field is NULL!\n" ); */
+            return Nullsv;
+          }
+        retsv = newRV( sv_2mortal( (SV *)av ) );
+
+        while ( i >= 0 && field != NULL ) {
+/*            fprintf( stderr, "Field: %s\n", field->name ); */
+            av_store( av, ( numFields - i ), 
+                      newSVpv( (char *)field->name, 0 ) );
+            field = msqlFetchField( imp_sth->cda );
+            i--;
+          }
+      } else {
+        return Nullsv;
+      }
+
+    return sv_2mortal( retsv );
 }

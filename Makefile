@@ -13,7 +13,7 @@
 #	LIBS => [q[-L/opt/mSQL-1.0.16/lib -lmsql -lm]]
 #	NAME => q[DBD::mSQL]
 #	OBJECT => q[$(O_FILES)]
-#	VERSION => q[0.64]
+#	VERSION => q[0.65]
 #	dist => { DIST_DEFAULT=>q[all tardist], COMPRESS=>q[gzip -9 -v -f], SUFFIX=>q[.gz] }
 #	dynamic_lib => { OTHERLDFLAGS=>q[-L$(MSQL_HOME)/lib -L/opt/mSQL-1.0.16/lib] }
 
@@ -46,9 +46,9 @@ AR_STATIC_ARGS = cr
 NAME = DBD::mSQL
 DISTNAME = DBD-mSQL
 NAME_SYM = DBD_mSQL
-VERSION = 0.64
-VERSION_SYM = 0_64
-XS_VERSION = 0.64
+VERSION = 0.65
+VERSION_SYM = 0_65
+XS_VERSION = 0.65
 INST_BIN = ./blib/bin
 INST_EXE = ./blib/script
 INST_LIB = ./blib/lib

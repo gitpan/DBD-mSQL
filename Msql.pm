@@ -16,7 +16,7 @@ package Msql;
 use DBI;
 use Exporter;
 
-$VERSION = "0.64";
+$VERSION = "0.65";
 
 @ISA = qw( Exporter );
 @EXPORT = qw( &connect &selectdb &listtables &query &numrows &name &type &table &isnotnull &is_not_null &isprikey &is_pri_key &length &fetchrow );
