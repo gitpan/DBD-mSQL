@@ -1,7 +1,7 @@
 Acknowledgements on the production and testing of DBD::mSQL
 -----------------------------------------------------------
 
-	o David M. Hughes
+	o David M. Hughes <bambi@hughes.com.au>
 
 	  - for writing mSQL in the first place
 
@@ -31,6 +31,12 @@ Acknowledgements on the production and testing of DBD::mSQL
 	o Doug MacEachern
 
 	  - for bug-spotting and comments on tkmSQL.
+
+	o Gary Shea <shea@xmission.com>
+
+	  - for pointing out several bugs, glitches and short-comings
+	    in the 0.60pl10 code.
+	  - for adding '_ListSelectedFields' code
 
 And all the other poor individuals that have tried and, with varying amounts 
 of success to use DBD::mSQL!

@@ -3,10 +3,16 @@ ChangeLog
 Changes
 MANIFEST
 Makefile.PL
+Msql.pm
 README
+README.Msqlperl
 dbdimp.c
 dbdimp.h
+extratests/connectspec.pl
 extratests/createdrop.pl
+extratests/cursortest.pl
+extratests/selectdbtest.pl
+extratests/testMsqlperl.pl
 mSQL.h
 mSQL.pm
 mSQL.pm.pre-install

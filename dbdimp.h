@@ -17,6 +17,16 @@
 #define HDA_SIZE 512
 #endif
 
+/* We need to define some Oracle typedefs too */
+#define eb1 char
+#define ub1 unsigned char
+#define ub2 unsigned short
+#define ub4 unsigned long
+#define sb1 signed char
+#define sb2 signed short
+#define sb4 signed int
+#define sword signed int
+
 typedef struct imp_fbh_st imp_fbh_t;
 
 /* Lda_def is defined to just being an int. It holds the socket code return
@@ -32,7 +42,7 @@ struct imp_drh_st {
 
 struct Lda_Def_st {
     int lda;
-    int rc;		/* Return code? */
+    sb2 rc;		/* Return code? */
     char *svdb;		/* Database Name */
     char *svhost;	/* Hostname of database */
     int svsock;		/* Socket doo-dah */
@@ -41,17 +51,6 @@ struct Lda_Def_st {
 typedef struct Lda_Def_st Lda_Def;
 /* typedef struct Lda_Def_st Cda_Def; */
 typedef struct result_s Cda_Def;
-
-/* We need to define some Oracle typedefs too */
-
-#define eb1 char
-#define ub1 unsigned char
-#define ub2 unsigned short
-#define ub4 unsigned long
-#define sb1 signed char
-#define sb2 signed short
-#define sb4 signed int
-#define sword signed int
 
 /* Define dbh implementor data structure */
 struct imp_dbh_st {
@@ -85,9 +84,11 @@ struct imp_sth_st {
     int is_update;
     int is_drop;
     int is_delete;
+    int is_select;
 
     /* Output Details	*/
     int        done_desc;   /* have we described this sth yet ?	*/
+    int        done_execute;/** Have we executed this sth yet? */
     int        fbh_num;     /* number of output fields		*/
     imp_fbh_t *fbh;	    /* array of imp_fbh_t structs	*/
     char      *fbh_cbuf;    /* memory for all field names       */
@@ -134,11 +135,26 @@ struct phs_st { /* scalar placeholder EXPERIMENTAL      */
 extern SV *dbd_errnum;
 extern SV *dbd_errstr;
 
-/*void    do_error _((SV *h, Lda_Def *lda, int rc, char *what)); */
-void	do_error _((int rc, char *what));
+/** Prototype definitions */
+void    dbd_init _((dbistate_t *dbistate));
+void	do_mSQL_error( sb2, char * );
 void    fbh_dump _((imp_fbh_t *fbh, int i));
 
-void    dbd_init _((dbistate_t *dbistate));
+int     dbd_db_login _((SV *dbh, char *host, char *dbname, char *junk));
+int     dbd_db_commit _((SV *dbh));
+int     dbd_db_rollback _((SV *dbh));
+int     dbd_db_disconnect _((SV *dbh));
+void    dbd_db_destroy _((SV *dbh));
+int     dbd_db_STORE _((SV *dbh, SV *keysv, SV *valuesv));
+SV      *dbd_db_FETCH _((SV *dbh, SV *keysv));
+SV	*dbd_db_fieldlist _((m_result *res));
+
+int     dbd_st_prepare _((SV *sth, char *statement, SV *attribs));
+int     dbd_st_finish _((SV *sth));
+void    dbd_st_destroy _((SV *sth));
+int     dbd_st_STORE _((SV *sth, SV *keysv, SV *valuesv));
+SV      *dbd_st_FETCH _((SV *sth, SV *keysv));
+
 void    dbd_preparse _((imp_sth_t *imp_sth, char *statement));
 int     dbd_describe _((SV *h, imp_sth_t *imp_sth));
 

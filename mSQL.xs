@@ -1,17 +1,14 @@
-/*
-   $Id: mSQL.xs,v 1.27 1995/06/22 00:37:04 timbo Rel $
-
-   Copyright (c) 1994,1995  Alligator Descartes
-
-   You may distribute under the terms of either the GNU General Public
-   License or the Artistic License, as specified in the Perl README file.
-
-*/
+/**
+ * $Id: mSQL.xs,v 1.27 1995/06/22 00:37:04 timbo Rel $
+ *
+ * (c)1994-1997 Alligator Descartes, based in part on work by Tim Bunce
+ *
+ * You may distribute under the terms of either the GNU General Public
+ * License or the Artistic License, as specified in the Perl README file.
+ *
+ */
 
 #include "mSQL.h"
-
-
-/* --- Variables --- */
 
 
 DBISTATE_DECLARE;
@@ -22,6 +19,9 @@ SV *dbd_errstr = NULL;
 
 
 MODULE = DBD::mSQL	PACKAGE = DBD::mSQL
+
+REQUIRE:	1.929
+PROTOTYPES:	DISABLE
 
 BOOT:
     items = 0;	/* avoid 'unused variable' warning */
@@ -36,8 +36,9 @@ void
 errstr(h)
     SV *	h
     CODE:
-    h = 0;	/* avoid 'unused variable' warning */
-    ST(0) = sv_mortalcopy(dbd_errstr);
+    /* called from DBI::var TIESCALAR code for $DBI::errstr     */
+    D_imp_xxh(h);
+    ST(0) = sv_mortalcopy(DBIc_ERRSTR(imp_xxh));
 
 
 MODULE = DBD::mSQL	PACKAGE = DBD::mSQL::dr
@@ -55,6 +56,10 @@ disconnect_all(drh)
                 DBIc_ERR(imp_drh), DBIc_ERRSTR(imp_drh));
         XSRETURN(0);
     }
+    /* perl_destruct with perl_destruct_level and $SIG{__WARN__} set    */
+    /* to a code ref core dumps when sv_2cv triggers warn loop.         */
+    if (perl_destruct_level)
+        perl_destruct_level = 0;
     XST_mIV(0, 1);
 
 
@@ -70,7 +75,7 @@ _ListDBs(drh, host)
     if ( sock != -1 ) {
         res = msqlListDBs( sock );
         if ( !res ) {
-            do_error( -1, msqlErrMsg );
+            do_mSQL_error( (sb2)-1, msqlErrMsg );
           } else {
             while ( ( cur = msqlFetchRow( res ) ) ) {
                 EXTEND( sp, 1);
@@ -95,10 +100,10 @@ _CreateDB(drh, host, dbname)
             EXTEND( sp, 1 );
             PUSHs( sv_2mortal((SV*)newSVpv( "OK", 2 )));
           } else {
-            do_error( -1, msqlErrMsg );
+            do_mSQL_error( -1, msqlErrMsg );
           }
       } else {
-        do_error( -1, msqlErrMsg );
+        do_mSQL_error( -1, msqlErrMsg );
       }
 
 
@@ -115,14 +120,48 @@ _DropDB(drh, host, dbname)
             EXTEND( sp, 1 );
             PUSHs( sv_2mortal((SV*)newSVpv( "OK", 2 )));
           } else {
-            do_error( -1, msqlErrMsg );
+            do_mSQL_error( -1, msqlErrMsg );
           }
       } else {
-        do_error( -1, msqlErrMsg );
+        do_mSQL_error( -1, msqlErrMsg );
       }
 
 
 MODULE = DBD::mSQL    PACKAGE = DBD::mSQL::db
+
+void
+_ListDBs(dbh)
+    SV *	dbh
+    PPCODE:
+    D_imp_dbh(dbh);
+    m_result *res;
+    m_row cur;
+    int sock = imp_dbh->lda.svsock;
+    if ( sock != -1 ) {
+        res = msqlListDBs( sock );
+        if ( !res ) {
+            do_mSQL_error( (sb2)-1, msqlErrMsg );
+          } else {
+            while ( ( cur = msqlFetchRow( res ) ) ) {
+                EXTEND( sp, 1);
+                PUSHs( sv_2mortal((SV*)newSVpv( cur[0], strlen(cur[0]))));
+              }
+            msqlFreeResult( res );
+          }
+      }
+
+void
+_SelectDB(dbh, dbname)
+    SV *	dbh
+    char *	dbname
+    PPCODE:
+    D_imp_dbh(dbh);
+    if ( imp_dbh->lda.svsock != -1 ) {
+        if ( msqlSelectDB( imp_dbh->lda.svsock, dbname ) == -1 ) {
+            do_mSQL_error( (sb2)( imp_dbh->lda.rc ), msqlErrMsg );
+          }
+      }
+
 
 void
 _ListTables(dbh)
@@ -133,7 +172,7 @@ _ListTables(dbh)
     m_row cur;
     res = msqlListTables( imp_dbh->lda.svsock );
     if ( !res ) {
-        do_error( -1, "Error in msqlListTables!" );
+        do_mSQL_error( -1, "Error in msqlListTables!" );
       } else {
         while ( ( cur = msqlFetchRow( res ) ) ) {
             EXTEND( sp, 1 );
@@ -141,7 +180,7 @@ _ListTables(dbh)
           }
         msqlFreeResult( res );
       }
-  
+ 
 
 void
 _ListFields(dbh, tabname)
@@ -150,62 +189,33 @@ _ListFields(dbh, tabname)
     PPCODE:
     D_imp_dbh(dbh);
     m_result *res;
-    m_field *curField;
-    HV * stash;
-    HV * hv;
-    SV * rv;
-    AV * avkey;
-    AV * avnam;
-    AV * avnnl;
-    AV * avtab;
-    AV * avtyp;
-    AV * avlength;
     if ( strlen( tabname ) == 0 ) {
-        do_error( -1, "Error in msqlListFields! Table name was NULL!\n" );
+        do_mSQL_error( -1, "Error in msqlListFields! Table name was NULL!\n" );
         return;
       }
     res = msqlListFields( imp_dbh->lda.svsock, tabname );
     if ( !res ) {
-        do_error( -1, "Error in msqlListFields!" );
+        do_mSQL_error( -1, "Error in msqlListFields!" );
       } else {
-        hv = (HV*)sv_2mortal((SV*)newHV());
-        hv_store(hv,"NUMROWS",7,(SV *)newSViv((IV)msqlNumRows(res)),0);
-        hv_store(hv,"NUMFIELDS",9,(SV *)newSViv((IV)msqlNumFields(res)),0);
-        msqlFieldSeek(res,0);
-        avkey = (AV*)sv_2mortal((SV*)newAV());
-	avnam = (AV*)sv_2mortal((SV*)newAV());
-	avnnl = (AV*)sv_2mortal((SV*)newAV());
-        avtab = (AV*)sv_2mortal((SV*)newAV());
-	avtyp = (AV*)sv_2mortal((SV*)newAV());
-        avlength = (AV*)sv_2mortal((SV*)newAV());
-        while ( ( curField = msqlFetchField( res ) ) ) {
-            av_push(avnam,(SV*)newSVpv(curField->name,strlen(curField->name)));
-            av_push(avtab,(SV*)newSVpv(curField->table,strlen(curField->table)));
-            av_push(avtyp,(SV*)newSViv(curField->type));
-            av_push(avkey,(SV*)newSViv(IS_PRI_KEY(curField->flags)));
-            av_push(avnnl,(SV*)newSViv(IS_NOT_NULL(curField->flags)));
-            av_push(avlength,(SV*)newSViv(curField->length));
+        SV * rv;
+        rv = dbd_db_fieldlist( res );
+        if ( !rv ) {
+	        do_mSQL_error( -1, "fieldlist() error in msqlListFields!" );
+          } else {
+            XPUSHs( (SV*)rv );
+            msqlFreeResult( res );
           }
-        rv = newRV((SV*)avnam); hv_store(hv,"NAME",4,rv,0);
-        rv = newRV((SV*)avtab); hv_store(hv,"TABLE",5,rv,0);
-        rv = newRV((SV*)avtyp); hv_store(hv,"TYPE",4,rv,0);
-        rv = newRV((SV*)avkey); hv_store(hv,"IS_PRI_KEY",10,rv,0);
-        rv = newRV((SV*)avnnl); hv_store(hv,"IS_NOT_NULL",11,rv,0);
-        rv = newRV((SV*)avlength); hv_store(hv,"LENGTH",6,rv,0);
-        hv_store(hv,"RESULT",6,(SV *)newSViv((IV)res),0);
-        rv = newRV((SV*)hv);
-        XPUSHs((SV*)rv);
-        msqlFreeResult( res );
       }
 
 
 void
-_login(dbh, host, dbname)
+_login(dbh, host, dbname, junk)
     SV *	dbh
     char *	host
     char *	dbname
+    char *	junk
     CODE:
-    ST(0) = dbd_db_login(dbh, host, dbname) ? &sv_yes : &sv_no;
+    ST(0) = dbd_db_login(dbh, host, dbname, junk) ? &sv_yes : &sv_no;
 
 
 void
@@ -226,12 +236,10 @@ STORE(dbh, keysv, valuesv)
     SV *        keysv
     SV *        valuesv
     CODE:
-    if (!dbd_db_STORE(dbh, keysv, valuesv)) {
-        /* XXX hand-off to DBI for possible processing */
-        croak("Can't set %s->{%s}: unrecognised attribute",
-                SvPV(dbh,na), SvPV(keysv,na));
-    }
-    ST(0) = &sv_undef;  /* discarded anyway */
+    if (!dbd_db_STORE(dbh, keysv, valuesv))
+        if (!DBIS->set_attr(dbh, keysv, valuesv))
+            ST(0) = &sv_no;
+
 
 void
 FETCH(dbh, keysv)
@@ -239,12 +247,10 @@ FETCH(dbh, keysv)
     SV *        keysv
     CODE:
     SV *valuesv = dbd_db_FETCH(dbh, keysv);
-    if (!valuesv) {
-        /* XXX hand-off to DBI for possible processing  */
-        croak("Can't get %s->{%s}: unrecognised attribute",
-                SvPV(dbh,na), SvPV(keysv,na));
-    }
+    if (!valuesv)
+        valuesv = DBIS->get_attr(dbh, keysv);
     ST(0) = valuesv;    /* dbd_db_FETCH did sv_2mortal  */
+
 
 void
 disconnect(dbh)
@@ -252,16 +258,13 @@ disconnect(dbh)
     CODE:
     D_imp_dbh(dbh);
     if ( !DBIc_ACTIVE(imp_dbh) ) {
-        if (DBIc_WARN(imp_dbh) && !dirty)
-            warn("disconnect: already logged off!");
         XSRETURN_YES;
     }
     /* Check for disconnect() being called whilst refs to cursors       */
     /* still exists. This needs some more thought.                      */
-    /* XXX We need to track DBIc_ACTIVE children not just all children  */
-    if (DBIc_KIDS(imp_dbh) && DBIc_WARN(imp_dbh) && !dirty) {
-        warn("disconnect(%s) invalidates %d associated cursor(s)",
-            SvPV(dbh,na), DBIc_KIDS(imp_dbh));
+    if (DBIc_ACTIVE_KIDS(imp_dbh) && DBIc_WARN(imp_dbh) && !dirty) {
+        warn("disconnect(%s) invalidates %d active cursor(s)",
+            SvPV(dbh,na), (int)DBIc_ACTIVE_KIDS(imp_dbh));
     }
     ST(0) = dbd_db_disconnect(dbh) ? &sv_yes : &sv_no;
 
@@ -273,17 +276,18 @@ DESTROY(dbh)
     D_imp_dbh(dbh);
     ST(0) = &sv_yes;
     if (!DBIc_IMPSET(imp_dbh)) {        /* was never fully set up       */
-        if (DBIc_WARN(imp_dbh) && !dirty)
+        if (DBIc_WARN(imp_dbh) && !dirty && dbis->debug >= 2)
              warn("Database handle %s DESTROY ignored - never set up",
                 SvPV(dbh,na));
-        return;
     }
-    if (DBIc_ACTIVE(imp_dbh)) {
-        if (DBIc_WARN(imp_dbh) && !dirty)
-             warn("Database handle destroyed without explicit disconnect");
-        dbd_db_disconnect(dbh);
+    else {
+        if (DBIc_ACTIVE(imp_dbh)) {
+            if (DBIc_WARN(imp_dbh) && !dirty)
+                 warn("Database handle destroyed without explicit disconnect");
+            dbd_db_disconnect(dbh);
+        }
+        dbd_db_destroy(dbh);
     }
-    dbd_db_destroy(dbh);                
 
 
 MODULE = DBD::mSQL    PACKAGE = DBD::mSQL::st
@@ -298,19 +302,69 @@ _NumRows(sth)
 
 
 void
-_prepare(sth, statement)
+_ListSelectedFields(sth)
+    SV *	sth
+    PPCODE:
+    D_imp_sth(sth);
+    m_result *res;
+    SV * rv;
+    /**
+     *  Set up an empty reference in case of error...
+     *  I really have no idea how to do this.
+     */
+    if ( !imp_sth->is_select ) {
+	    do_mSQL_error( -1, "not a SELECT in msqlListSelectedFields!" );
+      } else {
+        if ( !( res = imp_sth->cda ) ) {
+            do_mSQL_error( -1, "missing m_result in msqlListSelectedFields!" );
+          } else {
+            if ( !( rv = dbd_db_fieldlist( res ) ) ) {
+	            do_mSQL_error( -1, "fieldlist() error in msqlListSelectedFields!" );
+              } else {
+	            XPUSHs((SV*)rv);
+	          }
+	      }
+	  }
+
+
+void
+_prepare(sth, statement, attribs=Nullsv)
     SV *        sth
     char *      statement
+    SV *	attribs
     CODE:
-    ST(0) = dbd_st_prepare(sth, statement) ? &sv_yes : &sv_no;
+    DBD_ATTRIBS_CHECK("_prepare", sth, attribs);
+    ST(0) = dbd_st_prepare(sth, statement, attribs) ? &sv_yes : &sv_no;
 
 
 void
 rows(sth)
     SV *        sth
-    CODE:
+    PPCODE:
     D_imp_sth(sth);
-#    XST_mIV(0, (IV)imp_sth->cda->rpc);
+    EXTEND( sp, 1 );
+    PUSHs( sv_2mortal((SV*)newSViv(imp_sth->row_num)));
+
+
+void
+bind_param( sth, param, value, attribs=Nullsv)
+    SV *	sth
+    SV *	param
+    SV *	value
+    SV *	attribs
+    CODE:
+    ST(0) = &sv_undef;
+
+
+void
+bind_param_inout(sth, param, value_ref, maxlen, attribs=Nullsv)
+    SV *        sth
+    SV *        param
+    SV *        value_ref
+    IV          maxlen
+    SV *        attribs
+    CODE:
+    ST(0) = &sv_undef;
 
 
 void
@@ -318,39 +372,18 @@ execute(sth, ...)
     SV *        sth
     CODE:
     D_imp_sth(sth);
-    /* Handle binding any supplied values to placeholders */
-    if (items > 1) {
-        char name[16];
-        int i, error;
-        if (items-1 != HvKEYS(imp_sth->bind_names)) {
-            do_error(0, "Wrong number of bind variables");
-            XSRETURN_UNDEF;
-        }
-        for(i=1, error=0; i < items ; ++i) {
-            sprintf(name, ":p%d", i);
-#p            if (dbd_bind_ph(sth, imp_sth, name, ST(i)))
-#                ++error;
-        }
-        if (error) {
-            XSRETURN_UNDEF;     /* dbd_bind_ph called ora_error */
-        }
-    } else if (imp_sth->bind_names) {
-        /* oracle will tell us if values have not been bound    */
-        warn("execute assuming binds done elsewhere\n");
-    }
-
+    int retval;
     /* describe and allocate storage for results */
-    if (!imp_sth->done_desc && dbd_describe(sth, imp_sth)) {
-        XSRETURN_UNDEF; /* dbd_describe called ora_error()      */
-    }
-
-    /* Trigger execution of the statement */
-/*    if (oexec(imp_sth->cda)) { */ /* will change to oexfet later */
-/*        ora_error(sth, imp_sth->cda, imp_sth->cda->rc, "oexec error");
-        XSRETURN_UNDEF;
-    }*/
-    DBIc_ACTIVE_on(imp_sth);
-    XST_mYES(0);
+    retval = dbd_st_execute(sth, imp_sth);
+    if ( retval < 0 ) {
+        XST_mUNDEF( 0 );
+      } else { 
+        if ( retval == 0 ) {
+            XST_mPV( 0, "0E0" );
+          } else {
+            XST_mIV( 0, retval );
+          }
+      }
 
 
 void
@@ -360,7 +393,7 @@ fetchrow(sth)
     D_imp_sth(sth);
     int i;
     SV *sv;
-    imp_sth->done_desc = 0;
+//    imp_sth->done_desc = 0;
     if ( dbis->debug >= 2 ) {
         printf( "In: DBD::mSQL::fetchrow\n" );
         printf( "In: DBD::mSQL::fetchrow'imp_sth->currow: %d\n", 
@@ -373,7 +406,7 @@ fetchrow(sth)
     /* that dbd_describe() executed sucessfuly so the memory buffers	*/
     /* are allocated and bound.						*/
 #    pif ( !(imp_sth->flags & IMP_STH_EXECUTING) ) {
-#	do_error( 1, "no statement executing");
+#	do_mSQL_error( 1, "no statement executing");
 #	XSRETURN(0);
 #      }
     /* Advance through the buffer until we get to the row we want */
@@ -399,31 +432,30 @@ fetchrow(sth)
         PUSHs(sv);
       }
     imp_sth->currow++;
+ 
 
 void
-readblob(sth, field, offset, len, destsv=Nullsv)
+blob_read(sth, field, offset, len, destrv=Nullsv, destoffset=0)
     SV *        sth
     int field
     long        offset
     long        len
-    SV *        destsv
+    SV *        destrv
+    long	destoffset
     CODE:
-#    ST(0) = dbd_st_readblob(sth, field, offset, len, destsv);
     ST(0) = &sv_undef;
 
 
 void
-STORE(dbh, keysv, valuesv)
-    SV *        dbh
+STORE(sth, keysv, valuesv)
+    SV *        sth
     SV *        keysv
     SV *        valuesv
     CODE:
-    if (!dbd_st_STORE(dbh, keysv, valuesv)) {
-        /* XXX hand-off to DBI for possible processing  */
-        croak("Can't set %s->{%s}: unrecognised attribute",
-                SvPV(dbh,na), SvPV(keysv,na));
-    }
-    ST(0) = &sv_undef;  /* discarded anyway */
+    ST(0) = &sv_yes;
+    if (!dbd_st_STORE(sth, keysv, valuesv))
+        if (!DBIS->set_attr(sth, keysv, valuesv))
+            ST(0) = &sv_no;
 
 
 void
@@ -432,11 +464,8 @@ FETCH(sth, keysv)
     SV *        keysv
     CODE:
     SV *valuesv = dbd_st_FETCH(sth, keysv);
-    if (!valuesv) {
-        /* XXX hand-off to DBI for possible processing  */
-        croak("Can't get %s->{%s}: unrecognised attribute",
-                SvPV(sth,na), SvPV(keysv,na));
-    }
+    if (!valuesv)
+        valuesv = DBIS->get_attr(sth, keysv);
     ST(0) = valuesv;    /* dbd_st_FETCH did sv_2mortal  */
 
 void
@@ -453,10 +482,10 @@ finish(sth)
     }
     if (!DBIc_ACTIVE(imp_sth)) {
         /* No active statement to finish        */
-        /* XXX warn */
         XSRETURN_YES;
     }
     ST(0) = dbd_st_finish(sth) ? &sv_yes : &sv_no;
+
 
 void
 DESTROY(sth)

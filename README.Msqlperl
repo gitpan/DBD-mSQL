@@ -1,0 +1,29 @@
+Msqlperl Emulation Layer
+========================
+
+Copyright (C)1997 Alligator Descartes <descarte@hermetica.com>
+
+1. Introduction
+---------------
+
+Msqlperl was the original perl5 interface to mSQL databases. The DBD::mSQL
+driver was developed after the initial success of Msqlperl, making it a
+tough job to replace that module across sites across the Internet. In a
+similar vein to that taken by DBD::Oracle regarding the oraperl module,
+an Msqlperl emulation layer has been written that allows scripts written
+using the Msqlperl API to run on top of DBI.
+
+2. Who?
+-------
+
+If you have legacy Msqlperl scripts, you will want to use this module.
+After successfull testing, you may remove Msqlperl from your perl installation.
+If you have never used Msqlperl before, don't bother with the rest of this
+document!
+
+3. Notes and Caveats
+--------------------
+
+This software is relatively untested and contains many bugs and unimplemented
+features. However, the author would appreciate users of Msqlperl to inform
+him of what breaks under this emulation layer.

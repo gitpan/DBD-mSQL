@@ -1,14 +1,11 @@
-NOTE: This document is essentially that of DBD::Oracle's README. Most of the
-      points from that still apply.
 
-Original document: (c)Tim Bunce <Tim.Bunce@ig.co.uk>
-Amendments: (c)Alligator Descartes <descarte@hermetica.com>
+DBD::mSQL --  an mSQL 1.x/2.x interface for Perl 5.
+===================================================
 
----------8<-------------------8<--------------------
+Original document: (c)Tim Bunce
+Amendments and mSQL-specific information: (c)Alligator Descartes
 
-DBD::mSQL --  an mSQL 1.x interface for Perl 5.
-
-   Copyright (c) 1994,1995  Tim Bunce, Alligator Descartes
+   Copyright (c) 1994,1995,1996,1997  Tim Bunce, Alligator Descartes
 
    You may distribute under the terms of either the GNU General Public
    License or the Artistic License, as specified in the Perl README file.
@@ -23,6 +20,11 @@ BEFORE BUILDING, TESTING AND INSTALLING this you will need to:
     Build, test and install the DBI module.
     It is very important to test it and install it!
 
+    Read this file thoroughly.
+
+    Read the WWW pages at: http://www.hermetica.com/technologia/perl/DBI
+    especially the specific information for this driver and the ``Frequently 
+    Asked Questions''.
 
 BUILDING
 
@@ -53,9 +55,10 @@ Testing: The test program auto-searches your local mSQL databases for a
          test software does not discriminate between working databases and
          development ones!
 
-	 Also note! The methods to create and drop table are no exercised in
-         the main test.pl script. Look in the extratests directory for those
-	 test scripts.
+Additional Tests: Some additional test scripts are available in the
+                  'extratests/' directory. These include scripts to exercise
+                  creation and deletion of databases. Please use with
+                  discretion and care.
 
 If the message at the end of testing:
 
@@ -72,6 +75,10 @@ Please read the DBI WWW pages at:
 	http://www.hermetica.com/technologia/DBI
 
 for any pertinent outstanding build issues for your platform. 
+
+>>>>>>>>>>>>>>>>
+Keyword: ZoOblE
+<<<<<<<<<<<<<<<<
 
 Also, please post details to dbi-users@fugue.com and CC them to me at
 descarte@hermetica.com.  Please include:
@@ -91,15 +98,20 @@ descarte@hermetica.com.  Please include:
 4. If you get a core dump, try to include a stack trace from it.
    If the stack trace mentions XS_DynaLoader_dl_load_file then rerun
    make test after setting the environment variable PERL_DL_DEBUG to 2.
+   Retrieve the Devel::Corestack module from CPAN to aid you in the 
+   production of stack traces ( http://www.perl.com/CPAN/ ).
 
-5. Please don't post problems to comp.lang.perl.misc or perl5-porters.
+5. Please don't post problems to comp.lang.perl.misc, comp.lang.perl.modules
+   or perl-porters.
 
 6. If you are not currently subscribed to the mailing list please
-   also send a subscription request to dbi-users-request@fugue.com.
+   do so by visiting the URL:
 
-   Also, you can subscribe to the DBI Mailing Lists at:
+       http://www.fugue.com/dbi
 
-	http://www.fugue.com/dbi
+   Do *not* mail either the author or the mailing list regarding subscription
+   requests.
 
 Regards,
-Tim & Al.
+Alligator Descartes.
+Tim Bunce.

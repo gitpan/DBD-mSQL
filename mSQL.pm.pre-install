@@ -1,6 +1,6 @@
 #   $Id: mSQL.pm,v 1.18 1995/08/15 05:31:30 timbo Rel $
 #
-#   Copyright (c) 1994,1995 Tim Bunce
+#   Copyright (c) 1994,1995,1996,1997 Alligator Descartes, Tim Bunce
 #
 #   You may distribute under the terms of either the GNU General Public
 #   License or the Artistic License, as specified in the Perl README file.
@@ -13,7 +13,7 @@
     require DynaLoader;
     @ISA = qw(DynaLoader);
 
-	$VERSION = "0.60pl10";
+	$VERSION = "0.61";
 
     bootstrap DBD::mSQL;
 
@@ -52,7 +52,14 @@
     }
 
     sub connect {
-	my($drh, $host, $dbname)= @_;
+	my($drh, $host, $dbname, $junk )= @_;
+
+        if ( !defined $junk ) {
+            warn "The 'connect' syntax has changed. The syntax is now as per the DBI Spec.\n";
+            warn "Usage: \$dbh = connect( hostname, dbname, '', [driver name] );\n";
+            warn "Please note. This current connection will continue as normal.\n";
+            $junk = "";
+          }
 
 	# create a 'blank' dbh
 
@@ -66,9 +73,7 @@
 
         if ( $host =~ /\:/ ) {
             ( $host, $ENV{'MSQL_TCP_PORT'} ) = split( /\:/, $host );
-#            print "Setting MSQL_TCP_PORT to $ENV{'MSQL_TCP_PORT'}\n";
           } else {
-#            print "Setting MSQL_TCP_PORT to default\n";
             ( $host, $ENV{'MSQL_TCP_PORT'} ) = ( $host, %%MSQL_TCP_PORT%% );
           }
 
@@ -80,7 +85,7 @@
 	# Call mSQL msqlConnect func in mSQL.xs file
 	# and populate internal handle data.
 
-	DBD::mSQL::db::_login($this, $host, $dbname)
+	DBD::mSQL::db::_login($this, $host, $dbname, $junk)
 	    or return undef;
 
 	$this;

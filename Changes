@@ -1,3 +1,16 @@
+
+0.61
+	o Added code to plug some memory leaks
+	o Added experimental Msqlperl emulation
+	o Brought .xs and mSQL interface code in line with DBD::Oracle
+	o Fixed 'connect' call arguments
+	o Removed a lot of dead code
+	o Added some other methods for mSQL/Msqlperl emulation and flexibility
+	o Added mSQL version 2 support
+	o Made the Makefile.PL a bit more auto-configurey, in that it should
+	  try and detect what version of mSQL you have installed and are attempting
+	  to build against
+
 0.60pl10
 
 	o Altered mSQL.xs::st::DESTROY to stop blabbering about sth's

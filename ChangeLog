@@ -1,4 +1,4 @@
-DBD::mSQL for DBI - Written by Alligator Descartes <descarte@mcqueen.com>
+DBD::mSQL for DBI - Written by Alligator Descartes <descarte@hermetica.com>
 
 18/07/95:	Started. 
 
@@ -79,7 +79,7 @@ DBD::mSQL for DBI - Written by Alligator Descartes <descarte@mcqueen.com>
 14/08/95:13:48	Got email back from Andreas. signedness broke mSQL.xs as well!
 		Fixed that and emailed him a quick patch.
 
-14/08/94:14:45	Andreas now has a successful compile. The tests are crap, but
+14/08/95:14:45	Andreas now has a successful compile. The tests are crap, but
 		appear to ( sort of ) work.
 
 29/08/95:23:18	Converted driver across to new DBI format. It now appears
@@ -129,5 +129,9 @@ DBD::mSQL for DBI - Written by Alligator Descartes <descarte@mcqueen.com>
 30/12/95:18:15	Added 'length' key into the hash returned by ListFields, so
 		we can get the scale of the field.
 
-24/03/95:22:34	Fixed bugs and upgraded versioning for perl5.002 to work
+24/03/96:22:34	Fixed bugs and upgraded versioning for perl5.002 to work
 		properly. Released as pl10
+
+-> Lamentable lack of ChangeLog information here!
+
+27/03/97: Tidied up things with regard to 0.61 release. 
