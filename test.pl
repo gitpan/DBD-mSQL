@@ -2,6 +2,7 @@
 # $Id$
 #
 # (c)1995-1997 Alligator Descartes <descarte@hermetica.com>
+# Portions (c)1996 Gary Shea <shea@xmission.com>
 #
 # $Log$
 #
@@ -24,7 +25,26 @@ use DBI;
 
 # If you want verbose results, set this variable to 1. Otherwise, set it
 # to 0
-$verboseResults = 1;
+$verboseResults = 0;
+
+# Print a warning up if we haven't defined $test_dbname or $test_hostname
+if ( !defined $test_hostname || !defined $test_dbname ) {
+    print <<EOM;
+    I am about to perform testing of the DBD::mSQL module. This will
+    defaultly look for a database called 'test' on an mSQL server running
+    on the machine 'localhost'. If it fails to locate 'test', but detects
+    a running mSQL server, it will use *any* database it can find,
+    production or otherwise! If you don't want this to happen, exit now 
+    and create a database called 'test', or edit 'test.pl' and specify the
+    hostname and database name you wish to use as a test as indicated at
+    the beginning of that file.
+
+    You can hit CTRL-C now, if you wish to abort. Hitting CTRL-D or RETURN
+    should start the test running.
+EOM
+
+    while ( <> ) {}
+  }
 
 ### Set the hostname if we haven't defined it.........
 if ( !defined $test_hostname ) {
@@ -33,18 +53,17 @@ if ( !defined $test_hostname ) {
 
 ### Does a basic check to make sure we can install the driver! This is
 ### probably a useful thing to do...
-print "Testing: DBI->install_driver( 'mSQL' )\n";
+###
+### If this fails, then, if you haven't typed 'make install', do it now,
+### and re-try the test.
 ( $drh = DBI->install_driver( 'mSQL' ) )
-  and print( "\tok\n" )
-  or die "\tnot ok: $DBI::errstr\n";
+  or errorDiagnostic( '$error0' );
+#"\tDBI->install_driver( 'mSQL' ) failed: $DBI::errstr\n";
 
 ### This tests to see if we can list the databases on the server running
 ### on the given host. If there are no databases, this will error.
-print "Testing: \$drh->func( '$test_hostname', '_ListDBs' ). Make sure you have at least\n" . 
-      "         one database created!\n";
 ( @databases = $drh->func( $test_hostname, '_ListDBs' ) )
-    and print( "\tok\n" )
-    or die "\tnot ok: $DBI::errstr\n";
+    or errorDiagnostic( '$error1' );
 
 # Display the results if we want them
 if ( $verboseResults == 1 ) {
@@ -59,33 +78,26 @@ if ( !defined $test_dbname ) {
     $test_dbname = $databases[0];
   }
 ### Test the connection routines. First, connect to a database
-print "Testing: \$drh->connect( '$test_hostname', '$test_dbname', '' )\n";
 ( $dbh = $drh->connect( $test_hostname, $test_dbname, '' ) )
-    and print("\tok\n") 
-    or die "\tnot ok: $DBI::errstr\n";
+    or errorDiagnostic( '$error2' );
 
 ### ...and disconnect
-print "Testing: \$dbh->disconnect()\n";
 ( $dbh->disconnect )
-    and print( "\tok\n" )
-    or die "\tnot ok: $DBI::errstr\n";
+    or errorDiagnostic( '$error3' );
 
 ### Now, re-connect again so that we can do some more complicated stuff..
-print "Re-testing: \$drh->connect( '$test_hostname', '$test_dbname', '' )\n";
 ( $dbh = $drh->connect( $test_hostname, $test_dbname, '' ) )
-    and print( "\tok\n" )
-    or die "\tnot ok: $DBI::errstr\n";
+    or errorDiagnostic( '$error2' );
 
 ### List all the tables in the selected database........
-print "Testing: \$dbh->func( '_ListTables' )\n";
 ( @tables = $dbh->func( '_ListTables' ) )
-    and print( "\tok\n" )
-    or print "\tnot ok: $DBI::errstr\n";
+    or errorDiagnostic( '$error4' );
 
 if ( !defined @tables ) {
     @tables = ( 'rubbish' );
   }
 
+### If you want verbose results, here they are!
 if ( $verboseResults == 1 ) {
     print ">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>\n";
     foreach $table ( @tables ) {
@@ -110,16 +122,12 @@ while ( $foundtesttable ) {
   }
 
 ### Try creating a table in the test database
-print "Testing: \$dbh->do( 'CREATE TABLE $testtable ( id INTEGER, name CHAR(64) )' )\n";
 ( $dbh->do( "CREATE TABLE $testtable ( id INTEGER, name CHAR(64) )" ) )
-    and print( "\tok\n" )
-    or die "\tnot ok: $DBI::errstr\n";
+    or errorDiagnostic( '$error5' );
 
 ### ....and drop it........
-print "Testing: \$dbh->do( 'DROP TABLE $testtable' )\n";
 ( $dbh->do( "DROP TABLE $testtable" ) )
-    and print( "\tok\n" )
-    or die "\tnot ok: $DBI::errstr\n";
+    or errorDiagnostic( '$error6' );
 
 ### Now, re-create it so that we can test data insertion, deletion and
 ### selection methods........
@@ -342,3 +350,77 @@ if ( $ENV{LOGNAME} eq 'k' ) {
   }
 
 exit;
+
+### Error diagnostics: Attempt to give the user a clue as to what to do now
+###
+sub errorDiagnostic {
+
+    my $testId = shift;
+
+    ### The error diagnostic help stuff.......
+
+$error0 = "";           ### To shut -w up
+*error0 = 
+\"DBI->install_driver( 'mSQL' ) failed!\n\n" .
+"If you haven't typed 'make install', do it now, and re-run 'make test'\n" .
+"afterwards. Otherwise, you may see an error about 'unresolved symbols'.\n" .
+"If so, email the appropriate log information asked for in the README\n" .
+"to 'descarte\@hermetica.com'\n";
+
+$error1 = "";           ### To shut -w up
+$error1 =
+"\$drh->func( '$test_hostname', '_ListDBs' ) failed!\n\n" .
+"Make sure you have at least one database created\n";
+
+$error2 = "";           ### To shut -w up
+$error2 =
+"\$drh->connect( '$test_hostname', '$test_dbname', '' ) failed!\n\n" .
+"Make sure you have typed the database name correctly, and that the database\n" .
+"exists. Also check you have permission to access the database ( as defined\n" .
+"in the mSQL ACL file ). You may also want to check that the database hasn't\n" .
+"inadvertently crashed since the last test!\n";
+
+$error3 = "";           ### To shut -w up
+$error3 =
+"\$dbh->disconnect() failed!\n\n" .
+"Make sure your server is still functioning correctly, and check to make\n" .
+"sure your network isn't malfunctioning in the case of the server running\n" .
+"on a remote machine.\n";
+
+$error4 = "";           ### To shut -w up
+$error4 =
+"\$dbh->func( '_ListTables' ) failed!\n\n" .
+"This could be due to the fact you have no tables, but I hope not. You\n" .
+"could try running 'relshow -h $test_hostname $test_dbname' and see if\n" .
+"reports any information about your database, or errors.\n";
+
+$error5 = "";           ### To shut -w up
+$error5 =
+"\$dbh->do( 'CREATE TABLE $testtable ( id INTEGER, name CHAR(64) )' ) failed!\n\n" .
+"Make sure that your server is still running. Check that you have write\n" .
+"permission on the database that you are testing on. Also check to make\n" .
+"sure the table $testtable doesn't already exist. The test should find\n" .
+"a unique one. If this is the case, please email 'descarte\@hermetica.com\n" .
+"with this information. Thanks.\n";
+
+$error6 = "";           ### To shut -w up
+$error6 =
+"\$dbh->do( 'DROP TABLE $testtable' ) failed!\n\n" .
+"Check to make sure your server is still running. Also, check using the\n" .
+"'relshow -h $test_hostname $test_dbname' command that the testtable\n" .
+"$testtable has been created correctly.\n";
+
+    ### Print out the error message + diagnostic help and the DBI
+    ### error message, then exit.
+
+    local $safetestId = $testId;
+    $testId =~ s/(\$\w+)/$1/eeg;
+    print "$testId";
+    print "\nDBI Error Message: $DBI::errstr\n";
+    if ( $safetestId ne '$error4' ) {
+        print "Error: $safetestId\n";
+        exit -1;
+      } else {
+        return;
+      }
+  }

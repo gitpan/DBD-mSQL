@@ -15,6 +15,7 @@
 #                       questions.
 # descarte  27/03/97    Added /usr/local/Hughes to the list of default
 #                       directories to search
+# descarte  18/05/97    Added +z flag for HP-SUX PIC compilation
 
 BEGIN { require 5.003 }
 
@@ -26,7 +27,7 @@ use DBI 0.71;	# The DBI must be installed before we can build a DBD
 
 %opts = (
     'NAME'    => 'DBD::mSQL',
-    'VERSION' => '0.63',
+    'VERSION' => '0.64',
 );
 
 # --- Introduction
@@ -107,6 +108,34 @@ EOM
     $linkwith = "-L$MH/lib -R$MH/lib";
   } else {
     $linkwith = "-L$MH/lib";
+  }
+
+# We need to add +z to the list of CFLAGS if we're on HP-SUX, or -fPIC 
+# if we're on HP-SUX and using 'gcc'
+if ( $Config{osname} eq 'hpux' ) {
+    if ( $Config{cccdlflags} eq '+z' ) {
+        print <<EOM;
+You're building on HP-UX with the HP compiler. You might get a warning at
+the link stage of:
+
+ld: DP-Relative Code in file .../libmsql.a(libmsql.o)
+>  - Shared Library must be Position-Independent
+
+You'll have to recompile libmsql.a from the mSQL distribution with the
+'+z' flag of your C compiler.
+EOM
+      } elsif( $Config{cccdlflags} eq '-fPIC' ) {
+        print <<EOM;
+You're building on HP-UX with the GNU C Compiler. You might get a warning
+at the link stage like:
+
+ld: DP-Relative Code in file .../libmsql.a(libmsql.o)
+>  - Shared Library must be Position-Independent
+
+You'll have to recompile libmsql.a from the mSQL distribution specifying
+the '-fPIC' flag to produce Position-Independent code.
+EOM
+      }
   }
 
 # Try running '$MSQL_HOME/bin/msqladmin version' and see what we get
@@ -241,16 +270,16 @@ print "See README notes about SPARCompiler on Solaris\n"
 
 print "\n";
 
-open TTY, "/dev/tty" || die "Cannot open tty! Run in the foreground!\n";
-print "Keyword? ";
-$blah = <TTY>;
-if ( $blah =~ /ZoOblE/ ) {
-    print "Keyword verification is correct!\n";
-  } else {
-    print "Keyword verification has failed! Read the README, the FAQ and any other\ndocuments mentioned in the README before retrying the build process.\n";
-    exit 1;
-  }
-close TTY;
+#open TTY, "/dev/tty" || die "Cannot open tty! Run in the foreground!\n";
+#print "Keyword? ";
+#$blah = <TTY>;
+#if ( $blah =~ /ZoOblE/ ) {
+#    print "Keyword verification is correct!\n";
+#  } else {
+#    print "Keyword verification has failed! Read the README, the FAQ and any other\ndocuments mentioned in the README before retrying the build process.\n";
+#    exit 1;
+#  }
+#close TTY;
 
 WriteMakefile(%opts);
 

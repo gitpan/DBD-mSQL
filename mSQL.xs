@@ -340,10 +340,8 @@ _prepare(sth, statement, attribs=Nullsv)
 void
 rows(sth)
     SV *        sth
-    PPCODE:
-    D_imp_sth(sth);
-    EXTEND( sp, 1 );
-    PUSHs( sv_2mortal((SV*)newSViv(imp_sth->row_num)));
+    CODE:
+    XST_mIV(0, dbd_st_rows(sth));
 
 
 void
@@ -375,7 +373,7 @@ execute(sth, ...)
     int retval;
     /* describe and allocate storage for results */
     retval = dbd_st_execute(sth, imp_sth);
-    if ( retval < 0 ) {
+    if ( retval < -1 ) {
         XST_mUNDEF( 0 );
       } else { 
         if ( retval == 0 ) {
@@ -393,7 +391,7 @@ fetchrow(sth)
     D_imp_sth(sth);
     int i;
     SV *sv;
-//    imp_sth->done_desc = 0;
+/*    imp_sth->done_desc = 0; */
     if ( dbis->debug >= 2 ) {
         printf( "In: DBD::mSQL::fetchrow\n" );
         printf( "In: DBD::mSQL::fetchrow'imp_sth->currow: %d\n", 

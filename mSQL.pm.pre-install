@@ -13,7 +13,7 @@
     require DynaLoader;
     @ISA = qw(DynaLoader);
 
-	$VERSION = "0.63";
+	$VERSION = "0.64";
 
     bootstrap DBD::mSQL;
 
@@ -74,7 +74,8 @@
         if ( $host =~ /\:/ ) {
             ( $host, $ENV{'MSQL_TCP_PORT'} ) = split( /\:/, $host );
           } else {
-            ( $host, $ENV{'MSQL_TCP_PORT'} ) = ( $host, %%MSQL_TCP_PORT%% );
+            ( $host, $ENV{'MSQL_TCP_PORT'} ) = ( $host, %%MSQL_TCP_PORT%% )
+                unless $ENV{'MSQL_TCP_PORT'};
           }
 
 	my $this = DBI::_new_dbh($drh, {
@@ -119,6 +120,13 @@
 
 	$sth;
     }
+
+    sub quote {
+        my $self = shift;
+        my $str = shift;
+        $str =~ s/'/\\'/g;      # MSQL non-ISO compliant!
+        "'$str'";
+      }
 
 }
 

@@ -1,3 +1,4 @@
+
 Acknowledgements on the production and testing of DBD::mSQL
 -----------------------------------------------------------
 
@@ -13,7 +14,7 @@ Acknowledgements on the production and testing of DBD::mSQL
 	o Andreas Koenig <k@anna.mind.de> 
 
           - for Msqlperl, perl module listings, support, and moans about
-	    the lack of test suite.
+  	        the lack of test suite.
 
 	o Karsten Heinze
 
@@ -37,6 +38,7 @@ Acknowledgements on the production and testing of DBD::mSQL
 	  - for pointing out several bugs, glitches and short-comings
 	    in the 0.60pl10 code.
 	  - for adding '_ListSelectedFields' code
+	  - other miscellaneous ramblings and grumblings
 
 And all the other poor individuals that have tried and, with varying amounts 
 of success to use DBD::mSQL!

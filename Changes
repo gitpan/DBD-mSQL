@@ -1,4 +1,29 @@
 
+0.64
+
+    o Fixed return values from $sth->execute. It now correctly returns
+      -1 since mSQL doesn't appear to like row counting on non-SELECT
+      statements
+    o Added $sth->rows() method
+    o Added $sth->quote() method for correctly quoting strings under mSQL
+    o Patched Makefile.PL with warnings for HP-SUX
+    o Added feature that row counts can be got at with the return value of
+      $sth->execute call on SELECT statements. This is an mSQL peculiarity
+    o $sth->prepare() correctly returns undef on failure now
+    o Added some additional help in test.pl, which now makes it even more
+      incompatible with the standard t/* test harness! ( Sorry Andreas! )
+    o Added a warning to test.pl, which makes user interaction a requirement
+      unless you configure the test. This stops the test automatically 
+      scanning your mSQL server to find a database to test in, if you don't
+      have an obvious test database for it to use.
+    o _NumRows private method is now flagged for deprecation ( it doesn't
+      spit out warnings ). Please stop using it and start using $sth->rows()
+      instead.
+
+0.63
+
+    o Patched broken test.pl
+
 0.62
 
     o Patched bug that makes NULL be returned as undef

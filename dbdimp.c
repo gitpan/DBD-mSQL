@@ -52,20 +52,20 @@ dbd_db_login( dbh, host, dbname, junk )
 {
     D_imp_dbh(dbh);
 
-//    printf( "%s:%d: dbd_db_login: %s\n", __FILE__, __LINE__, dbname );
+/*    printf( "%s:%d: dbd_db_login: %s\n", __FILE__, __LINE__, dbname ); */
 
     if (host && !*host) host = 0;    /* Patch by Sven Verdoolaege */
     imp_dbh->lda.svsock = msqlConnect( host ); 
 
     if ( imp_dbh->lda.svsock == -1 ) {
         do_mSQL_error( (sb2)( imp_dbh->lda.rc ), msqlErrMsg );
-        return 0;
+        return -1;
       } 
 
     if ( strlen( dbname ) != 0 ) {
         if ( msqlSelectDB( imp_dbh->lda.svsock, dbname ) == -1 ) {
             do_mSQL_error( (sb2)(imp_dbh->lda.rc ), msqlErrMsg );
-            return 0;
+            return -1;
           } 
       }
     /** Dump the information we have into the Lda_Def */
@@ -306,33 +306,49 @@ dbd_st_execute( h, imp_sth )
      * then return immediately. Otherwise, set the flag to stop us re-exec'ing
      * this statement.
      */
-//    fprintf( stderr, "imp_sth->done_execute: %d\n", imp_sth->done_execute );
+/*    fprintf( stderr, "imp_sth->done_execute: %d\n", imp_sth->done_execute ); */
     if ( imp_sth->done_execute == 1 ) {
         return 0;
       }
     imp_sth->done_execute = 1;
-//    imp_sth->done_desc = 0;
+/*    imp_sth->done_desc = 0; */
 
     /** Issue the statement */
-//    fprintf( stderr, "Issuing statement: %s\n", imp_sth->statement );
+/*    fprintf( stderr, "Issuing statement: %s\n", imp_sth->statement ); */
     if ( msqlQuery( imp_dbh->lda.svsock, imp_sth->statement ) == -1 ) { 
-        do_mSQL_error( (sb2)0, msqlErrMsg );
-        return 0;
+        do_mSQL_error( (sb2)-1, msqlErrMsg );
+        return -2;
       }
 
     /** Store the result from the Query */
     if ( imp_sth->is_insert || imp_sth->is_create || imp_sth->is_update || imp_sth->is_drop || imp_sth->is_delete ) {
-      imp_sth->cda = NULL;
-      DBIc_IMPSET_on(imp_sth);
-      imp_sth->row_num = 1;
-      return 1;
-    }
+        /**
+         * @@For the moment, it appears we cannot store the result of the
+         * non-SELECT statements, which means we cannot return the number of
+         * rows affected by non-SELECT statements.
+         */
+/*        imp_sth->cda = msqlStoreResult();
+        if ( !imp_sth->cda ) {
+            do_mSQL_error( (sb2)-1, "Cannot store result for row count!" );
+            return -1;
+          }
+        imp_sth->row_num = msqlNumRows( imp_sth->cda );
+        DBIc_IMPSET_on(imp_sth);
+        msqlFreeResult( imp_sth->cda );
+        imp_sth->cda = NULL;
+        return imp_sth->row_num; */
+
+        imp_sth->cda = NULL;
+        imp_sth->row_num = -1;
+        DBIc_IMPSET_on( imp_sth );
+        return -1;
+      }
 
     /** Store the result in the current statement handle */
     imp_sth->cda = msqlStoreResult();
     if ( !imp_sth->cda ) {
-        do_mSQL_error( (sb2)0, msqlErrMsg );
-        return 0;
+        do_mSQL_error( (sb2)-1, msqlErrMsg );
+        return -2;
       }
 
     imp_sth->row_num = msqlNumRows( imp_sth->cda );
@@ -346,7 +362,7 @@ dbd_st_execute( h, imp_sth )
         printf( "DBD::mSQL::dbd_db_prepare'imp_sth->fbh_num: %d\n",
                 imp_sth->fbh_num );
 
-    return 1;
+    return imp_sth->row_num;
   }
 
 int
@@ -363,7 +379,7 @@ dbd_describe(h, imp_sth)
     m_row cur;
     m_field *curField;
     int length;
-//  FILE *fp = DBILOGFP;
+/*  FILE *fp = DBILOGFP; */
   
     if ( dbis->debug >= 2 )
         warn( "In: DBD::mSQL::dbd_describe()\n" );
@@ -522,6 +538,14 @@ dbd_describe(h, imp_sth)
   }
 
 int
+dbd_st_rows(sth)
+    SV *sth;
+{
+    D_imp_sth(sth);
+    return imp_sth->row_num;
+  }
+
+int
 dbd_st_finish(sth)
     SV *sth;
 {
@@ -541,6 +565,9 @@ dbd_st_destroy(sth)
     D_imp_dbh_from_sth;
 
     /* Free off contents of imp_sth     */
+    if ( dbis->debug >= 2 ) {
+        warn( "dbd_st_destroy()\n" );
+      }
 /** Unused in DBD::mSQL currently 
     fields = DBIc_NUM_FIELDS(imp_sth);
     imp_sth->in_cache    = 0;

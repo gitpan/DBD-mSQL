@@ -137,3 +137,10 @@ DBD::mSQL for DBI - Written by Alligator Descartes <descarte@hermetica.com>
 27/03/97: Tidied up things with regard to 0.61 release. 
 
 28/03/97: Patched NULL as undef bug
+
+28/03/97: Patched broken test
+
+-> More lack of ChangeLog information......*sigh*
+
+04/06/97: Did all the outstanding fixes from 0.63 to 0.64. That's me. I'm
+          done.
