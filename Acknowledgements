@@ -28,6 +28,10 @@ Acknowledgements on the production and testing of DBD::mSQL
 
           - for spotting DBIc_ENDING bug
 
+	o Doug MacEachern
+
+	  - for bug-spotting and comments on tkmSQL.
+
 And all the other poor individuals that have tried and, with varying amounts 
 of success to use DBD::mSQL!
 

@@ -12,7 +12,7 @@ use DBI;
 # - machine running the mSQL daemon that you wish to use as a test. Otherwise,
 # - the test script will use a local mSQL daemon.
 
-#$test_hostname = 'alma';
+#$test_hostname = '';
 
 if ( !defined $test_hostname ) {
     $test_hostname = 'localhost';

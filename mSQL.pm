@@ -69,7 +69,7 @@
 #            print "Setting MSQL_TCP_PORT to $ENV{'MSQL_TCP_PORT'}\n";
           } else {
 #            print "Setting MSQL_TCP_PORT to default\n";
-            ( $host, $ENV{'MSQL_TCP_PORT'} ) = ( $host, %%MSQL_TCP_PORT%% );
+            ( $host, $ENV{'MSQL_TCP_PORT'} ) = ( $host, 4333 );
           }
 
 	my $this = DBI::_new_dbh($drh, {

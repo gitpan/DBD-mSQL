@@ -1,3 +1,14 @@
+0.60pl10
+
+	o Altered mSQL.xs::st::DESTROY to stop blabbering about sth's
+          "destroyed without finish". Blame Doug MacEachern for this one....
+
+	o Altered mSQL.xs to put msqlFreeResult in the correct place in each
+	  of the 'func' calls. It was getting called even if the routine to
+          populate the struct to be freed failed..........Which resulted in
+          a core. Thanks to Robert C. Hinds for producing a detailed error 
+	  log for me to fix.
+
 0.60pl9
 
 	o Added 'length' key into the hash returned by func( '_ListFields' )

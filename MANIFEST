@@ -2,14 +2,13 @@ Acknowledgements
 ChangeLog
 Changes
 MANIFEST
-Makefile
 Makefile.PL
 README
-ToDo
 dbdimp.c
 dbdimp.h
 extratests/createdrop.pl
 mSQL.h
+mSQL.pm
 mSQL.pm.pre-install
 mSQL.xs
 test.pl

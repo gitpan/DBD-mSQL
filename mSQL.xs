@@ -76,8 +76,8 @@ _ListDBs(drh, host)
                 EXTEND( sp, 1);
                 PUSHs( sv_2mortal((SV*)newSVpv( cur[0], strlen(cur[0]))));
               }
+            msqlFreeResult( res );
           }
-        msqlFreeResult( res );
         msqlClose( sock );
       }
 
@@ -133,14 +133,14 @@ _ListTables(dbh)
     m_row cur;
     res = msqlListTables( imp_dbh->lda.svsock );
     if ( !res ) {
-        warn( "Error in msqlListTables!\n" );
+        do_error( -1, "Error in msqlListTables!" );
       } else {
         while ( ( cur = msqlFetchRow( res ) ) ) {
             EXTEND( sp, 1 );
             PUSHs( sv_2mortal((SV*)newSVpv( cur[0], strlen( cur[0] )))); 
           }
+        msqlFreeResult( res );
       }
-    msqlFreeResult( res );
   
 
 void
@@ -160,9 +160,13 @@ _ListFields(dbh, tabname)
     AV * avtab;
     AV * avtyp;
     AV * avlength;
+    if ( strlen( tabname ) == 0 ) {
+        do_error( -1, "Error in msqlListFields! Table name was NULL!\n" );
+        return;
+      }
     res = msqlListFields( imp_dbh->lda.svsock, tabname );
     if ( !res ) {
-        warn( "Error in msqlListFields!\n" );
+        do_error( -1, "Error in msqlListFields!" );
       } else {
         hv = (HV*)sv_2mortal((SV*)newHV());
         hv_store(hv,"NUMROWS",7,(SV *)newSViv((IV)msqlNumRows(res)),0);
@@ -191,8 +195,8 @@ _ListFields(dbh, tabname)
         hv_store(hv,"RESULT",6,(SV *)newSViv((IV)res),0);
         rv = newRV((SV*)hv);
         XPUSHs((SV*)rv);
+        msqlFreeResult( res );
       }
-    msqlFreeResult( res );
 
 
 void
@@ -467,9 +471,6 @@ DESTROY(sth)
         return;
     }
     if (DBIc_ACTIVE(imp_sth)) {
-        if (DBIc_WARN(imp_sth) && !dirty)
-            warn("Statement handle %s destroyed without finish()",
-                SvPV(sth,na));
         dbd_st_finish(sth);
     }
     dbd_st_destroy(sth);

@@ -17,7 +17,7 @@ use DBI;	# The DBI must be installed before we can build a DBD
 
 %opts = (
     'NAME'    => 'DBD::mSQL',
-    'VERSION' => '0.60pl9',
+    'VERSION' => '0.60pl10',
 );
 
 # --- Introduction
@@ -88,7 +88,7 @@ close MSQLPMOUT;
 close MSQLPMIN;
  
 $opts{LIBS} = [ $sysliblist ];
-$opts{INC}  = "-I$MH/include -I$Config{archlib}/DBI";
+$opts{INC}  = "-I$MH/include -I$Config{archlib}/DBI -I$Config{sitearch}/DBI";
 #$opts{dynamic_lib} = { OTHERLDFLAGS => '-L$(LIBHOME)' .$linkwith };
 $opts{dynamic_lib} = { OTHERLDFLAGS => '-L$(MSQL_HOME)/lib ' .$linkwith };
 $opts{OBJECT} = '$(O_FILES)';

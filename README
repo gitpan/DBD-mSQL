@@ -81,7 +81,7 @@ descarte@hermetica.com.  Please include:
 	perl Makefile.PL           (do a make realclean first)
 	make
 	make test
-	make test TEST_VERBOSE=1   (if any tests fail)
+	make test TEST_VERBOSE=1 PERL_DBI_DEBUG=2   (if any tests fail)
 
 2. Full details of which version of mSQL and Perl you're using.
 
