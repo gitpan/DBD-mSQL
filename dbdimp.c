@@ -475,16 +475,18 @@ dbd_describe(h, imp_sth)
         if ( dbis->debug >= 2 )
             warn( "In: DBD::mSQL::dbd_describe'LinkRow: %d\n", i );
 
-        if ( (sb1*)cur[i] == '\0' ) { 
+        if ( cur[i] == 0 ) { 
             if ( dbis->debug >= 2 )
                 warn( "Looks like a NULL!\n" ); 
             fbh->cbuf[0] = '\0'; 
             fbh->cbufl = 0;
             fbh->rlen = fbh->cbufl;
+	    fbh->indp = 1;
           } else {
             fbh->cbuf = (sb1*)cur[i];
             fbh->cbufl = (sb4)strlen( (const char*)fbh->cbuf );
             fbh->rlen = fbh->cbufl;
+	    fbh->indp = 0;
           } 
 
         if ( dbis->debug >= 2 )

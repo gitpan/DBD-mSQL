@@ -13,7 +13,7 @@
 #	LIBS => [q[-L/opt/mSQL-1.0.16/lib -lmsql -lm]]
 #	NAME => q[DBD::mSQL]
 #	OBJECT => q[$(O_FILES)]
-#	VERSION => q[0.65]
+#	VERSION => q[0.66]
 #	dist => { DIST_DEFAULT=>q[all tardist], COMPRESS=>q[gzip -9 -v -f], SUFFIX=>q[.gz] }
 #	dynamic_lib => { OTHERLDFLAGS=>q[-L$(MSQL_HOME)/lib -L/opt/mSQL-1.0.16/lib] }
 
@@ -46,9 +46,9 @@ AR_STATIC_ARGS = cr
 NAME = DBD::mSQL
 DISTNAME = DBD-mSQL
 NAME_SYM = DBD_mSQL
-VERSION = 0.65
-VERSION_SYM = 0_65
-XS_VERSION = 0.65
+VERSION = 0.66
+VERSION_SYM = 0_66
+XS_VERSION = 0.66
 INST_BIN = ./blib/bin
 INST_EXE = ./blib/script
 INST_LIB = ./blib/lib
@@ -106,7 +106,7 @@ O_FILES = dbdimp.o \
 H_FILES = dbdimp.h \
 	mSQL.h
 MAN1PODS = 
-MAN3PODS = 
+MAN3PODS = mSQL.pm
 INST_MAN1DIR = ./blib/man1
 INSTALLMAN1DIR = /opt/gnu/man/man1
 MAN1EXT = 1
@@ -356,6 +356,16 @@ $(INST_ARCHAUTODIR)/.exists :: /opt/gnu/lib/perl5/i586-linux/5.00397/CORE/perl.h
 
 	-@$(CHMOD) 755 $(INST_ARCHAUTODIR)
 
+config :: $(INST_MAN3DIR)/.exists
+	@$(NOOP)
+
+
+$(INST_MAN3DIR)/.exists :: /opt/gnu/lib/perl5/i586-linux/5.00397/CORE/perl.h
+	@$(MKPATH) $(INST_MAN3DIR)
+	@$(EQUALIZE_TIMESTAMP) /opt/gnu/lib/perl5/i586-linux/5.00397/CORE/perl.h $(INST_MAN3DIR)/.exists
+
+	-@$(CHMOD) 755 $(INST_MAN3DIR)
+
 $(O_FILES): $(H_FILES)
 
 help:
@@ -438,10 +448,17 @@ $(INST_STATIC): $(OBJECT) $(MYEXTLIB) $(INST_ARCHAUTODIR)/.exists
 
 
 # --- MakeMaker manifypods section:
+POD2MAN_EXE = /opt/gnu/bin/pod2man
+POD2MAN = $(PERL) -we '%m=@ARGV;for (keys %m){' \
+-e 'next if -e $$m{$$_} && -M $$m{$$_} < -M $$_ && -M $$m{$$_} < -M "Makefile";' \
+-e 'print "Manifying $$m{$$_}\n";' \
+-e 'system(qq[$$^X ].q["-I$(PERL_ARCHLIB)" "-I$(PERL_LIB)" $(POD2MAN_EXE) ].qq[$$_>$$m{$$_}])==0 or warn "Couldn\047t install $$m{$$_}\n";' \
+-e 'chmod 0644, $$m{$$_} or warn "chmod 644 $$m{$$_}: $$!\n";}'
 
-manifypods :
-	@$(NOOP)
-
+manifypods : mSQL.pm
+	@$(POD2MAN) \
+	mSQL.pm \
+	$(INST_MAN3DIR)/DBD::mSQL.$(MAN3EXT)
 
 # --- MakeMaker processPL section:
 

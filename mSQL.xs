@@ -425,7 +425,7 @@ fetchrow(sth)
                     fbh->rlen );
           }
         SvCUR( fbh->sv ) = fbh->rlen;
-        if ( fbh->rlen == 0 && fbh->cbuf[0] == '\0' ) {   /** Assume NULL */
+        if ( fbh->indp ) {   /** Assume NULL */
             sv = &sv_undef;
           } else {
             sv = sv_2mortal( newSVpv( (char *)fbh->cbuf, fbh->rlen ) );

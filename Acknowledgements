@@ -38,6 +38,7 @@ Acknowledgements on the production and testing of DBD::mSQL
 	  - for pointing out several bugs, glitches and short-comings
 	    in the 0.60pl10 code.
 	  - for adding '_ListSelectedFields' code
+	  - zero-length string patches
 	  - other miscellaneous ramblings and grumblings
 
 And all the other poor individuals that have tried and, with varying amounts 

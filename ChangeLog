@@ -144,3 +144,19 @@ DBD::mSQL for DBI - Written by Alligator Descartes <descarte@hermetica.com>
 
 04/06/97: Did all the outstanding fixes from 0.63 to 0.64. That's me. I'm
           done.
+
+08/06/97: Oh no I'm not! Added support for the optional attribute hash in
+          DBI->connect().
+
+          Patched a monster bug that returned the wrong error values upon
+          DBI->connect() failing, in that, it didn't think it was an error.
+          Yike.
+
+          Added support for $sth->{NAME} as a temporary kludge.
+
+          Released 0.65
+
+12/06/97: Added POD documentation for DBD::mSQL's quirks. Applied Gary Shea's
+          patches for zero-length strings and some test.pl patches.
+
+          Released 0.66

@@ -149,8 +149,9 @@ if ( $verboseResults == 1 ) {
     @types = @{ $ref->{TYPE} };
     @nullable = @{ $ref->{IS_NOT_NULL} };
     @primarykey = @{ $ref->{IS_PRI_KEY} };
+    @length = @{ $ref->{LENGTH} };
     for ( $i = 0 ; $i < $ref->{NUMFIELDS} ; $i++ ) {
-        print "\tField: $fields[$i]\tType: $types[$i]\tNullable: $nullable[$i]\tPrimaryKey: $primarykey[$i]\n";
+        print "\tField: $fields[$i]\tType: $types[$i]\tLength: $length[$i]\tNullable: $nullable[$i]\tPrimaryKey: $primarykey[$i]\n";
       }
     print "<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<\n";
   }
@@ -265,6 +266,46 @@ undef $cursor;
 ### Delete the test row from the table
 $rv = 
     $dbh->do( "DELETE FROM $testtable WHERE id = NULL AND name = 'NULL-valued id'" );
+
+### Test whether or not a char field containing a blank is returned correctly
+### as blank, or something much more bizarre
+
+print "Testing: \$cursor->do( 'INSERT INTO $testtable VALUES ( 2, '' )' )\n";
+( $rv = $dbh->do( "INSERT INTO $testtable VALUES ( 2, '' )" ) )
+    and print( "\tok\n" )
+    or die "\tnot ok: $DBI::errstr\n";
+
+print "Testing: \$cursor = \$dbh->prepare( 'SELECT name FROM $testtable WHERE id = 2 AND name = '')\n";
+( $cursor = $dbh->prepare( "SELECT name FROM $testtable WHERE id = 2 AND name = ''" ) )
+    and print "\tok\n"
+    or die "\tnot ok: $DBI::errstr\n";
+
+$cursor->execute;
+
+$rv = undef;
+print "Testing: \$cursor->fetchrow\n";
+( ( $rv ) = $cursor->fetchrow )
+    and print "\tok\n"
+    or die "\tnot ok: $DBI::errstr\n";
+
+if ( defined ($rv) && $rv eq '' ) {
+    print "\ttest passes. blank value returned as blank\n";
+} else {
+    print "\ttest failed. blank value returned as ",
+	defined ($rv) ? $rv : 'undef', "\n";
+}
+
+print "Testing: \$cursor->finish\n";
+( $cursor->finish )
+    and print "\tok\n"
+    or print "\tnot ok\n";
+
+# Temporary bug-plug
+undef $cursor;
+
+### Delete the test row from the table
+$rv = 
+    $dbh->do( "DELETE FROM $testtable WHERE id = 2 AND name = ''" );
 
 ### Test the new funky routines to list the fields applicable to a SELECT
 ### statement, and not necessarily just those in a table...

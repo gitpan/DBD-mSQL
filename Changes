@@ -1,4 +1,23 @@
 
+0.66
+
+    o Added POD for DBD::mSQL's quirks and non-standard methods. Use:
+
+            perldoc DBD::mSQL
+
+      to read it. Reading it is a good idea.
+
+    o Applied Gary Shea's patches:
+
+        o LENGTH is not tested in the mSQLFetchField test ( test.pl )
+        o Zero-length CHAR fields were being incorrectly returned as NULL
+          ( dbdimp.c )
+
+    o Optional %attr hash in DBI->connect() typo. "dbname" should have read
+      "database". Please note, this method of connecting is *NON-PORTABLE*.
+      Also, this problem was only in the 'Changes' file. The actual module
+      code has always been correct. *sigh*
+
 0.65
 
     o Fixed broken connect() error status problems. If the connection
@@ -10,7 +29,7 @@
 
         %connectHash = ( 
             "hostname"  => 'localhost',
-            "dbname"    => 'dbname',
+            "database"  => 'dbname',
             "port"      => '1112'
           );
 

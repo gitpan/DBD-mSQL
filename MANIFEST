@@ -24,7 +24,6 @@ extratests/selectdbtest.pl
 extratests/selectrows.pl
 extratests/testMsqlperl.pl
 mSQL.h
-mSQL.pm
 mSQL.pm.pre-install
 mSQL.xs
 test.pl

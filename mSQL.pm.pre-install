@@ -8,12 +8,245 @@
 {
     package DBD::mSQL;
 
+=head1 NAME
+
+DBD::mSQL - mSQL-1.I<x> / 2.I<x> driver for the Perl5 Database Interface (DBI)
+
+=head1 SYNOPSIS
+
+    $dbh = DBI->connect( $hostname, $database, $username, 'mSQL' );
+    $dbh = DBI->connect( "$hostname:$port", $database, $username, 'mSQL' );
+
+    @databases = $drh->func( $hostname, '_ListDBs' );
+    @tables = $dbh->func( '_ListTables' );
+    $ref = $dbh->func( $table, '_ListFields' );
+    $ref = $sth->func( '_ListSelectedFields' );
+
+    $numRows = $sth->func( '_NumRows' );
+
+    $rc = $drh->func( $database, '_CreateDB' );
+    $rc = $drh->func( $database, '_DropDB' );
+
+=head1 NOTE
+
+This documentation is compliant with DBD::mSQL-0.66 dated Thursday, June 12th,
+1997.
+
+=head1 DESCRIPTION
+
+B<DBD::mSQL> is the Perl5 Database Interface driver for mSQL 1.I<x> and
+2.I<x> databases.
+
+=head1 DBD::mSQL Class Methods
+
+=over 4
+
+=item B<connect>
+
+    $dbh = DBI->connect( $hostname, $database, '', 'mSQL' );
+
+The C<connect> method has been overridden in B<DBD::mSQL> to suit the particular
+connection requirements of mSQL. There is no requirement for a I<username>
+or I<password> in mSQL, so these arguments have been replaced in favour of
+I<hostname> and I<database>. These arguments are completely I<non-portable>.
+
+The hostname, if specified as '', will default to an mSQL daemon running
+on the machine named C<localhost>. The C<database> argument must always
+be specified.
+
+Should the mSQL daemon be running on a non-standard port number, you may 
+explicitly state the port number to connect to in the C<hostname> argument,
+by concatenating the I<hostname> and I<port number> together separated by
+a colon ( C<:> ) character.
+
+    $dbh = DBI->connect( "$hostname:$port", $database, '', 'mSQL );
+
+Another method of connection uses an optional I<attribute hash> which can be
+populated with values. Again, this is I<non-portable>. The valid hash
+values for B<DBD::mSQL> are:
+
+    hostname
+    database
+    port
+
+And may be used in the following way
+
+    %connectHash = (
+        "hostname" => "localhost",
+        "database" => "somedb",
+        "port"     => "4333"
+      );
+
+    $dbh = DBI->connect( '', '', '', 'mSQL', \%attr );
+
+The standard arguments may be populated, but, if the attribute hash is 
+specified, these will be overridden. If the hash is not specified, the
+standard arguments will be used as per normal.
+
+=back
+
+=head2 DBD::mSQL Private MetaData Methods
+
+=over 4
+
+=item B<ListDBs>
+
+    @databases = $drh->func( $hostname, '_ListDBs' );
+
+This private method returns an array containing the names of all databases
+present on the mSQL daemon running on C<hostname>. If there are no databases,
+an empty list will be returned. A sample usage of this method is:
+
+    @databases = $drh->func( 'localhost', '_ListDBs' );
+    foreach $db ( @databases ) {
+        print "Database: $db\n";
+      }
+
+=item B<ListTables>
+
+    @tables = $dbh->func( '_ListTables' );
+
+Once connected to the desired database on the desired mSQL daemon with the
+C<DBI->connect()> method, we may extract a list of the tables that have been
+created within that database.
+
+C<ListTables> returns an array containing the names of all the tables present
+within the selected database. If no tables have been created, an empty list
+is returned.
+
+    @tables = $dbh->func( '_ListTables' );
+    foreach $table ( @tables ) {
+        print "Table: $table\n";
+      }
+
+=item B<ListFields>
+
+    $ref = $dbh->func( $table, '_ListFields' );
+
+C<ListFields> returns a reference to a hashtable containing metadata information
+on the fields within the given table. If the table specified in C<table> does
+not exist, C<undef> will be returned and an error flagged.
+
+The valid keys within the hashtable that may be referenced are:
+
+    NAME           The name of the field
+    TYPE           The datatype of the field: CHAR, REAL, INTEGER, NULL
+    IS_NOT_NULL    Indicates whether the field is NULLable or not
+    IS_PRI_KEY     Indicates whether the field is a Primary Key ( this is
+                     only valid in mSQL 1.x databases. mSQL 2.x uses indices )
+    LENGTH         The size of the field
+    NUMFIELDS      The number of fields within the table
+
+Since a reference is returned, it requires slightly more work to extract the
+pertinent information from it. Here's an example of how to do it:
+
+    $ref = $dbh->func( 'someTable', '_ListFields' );
+    @fieldNames = @{ $ref->{NAME} };
+    @fieldTypes = @{ $ref->{TYPE} };
+    @fieldNulls = @{ $ref->{IS_NOT_NULL} };
+    @fieldKeys  = @{ $ref->{IS_PRI_KEY} };
+    @fieldLength = @{ $ref->{LENGTH} };
+    for ( $i = 0 ; $i < $ref->{NUMFIELDS} ; $i++ ) {
+        print "Field: $fieldNames[$i]\n";
+        print "\tType: $fieldTypes[$i]\n";
+        print "\tNullable: $fieldNulls[$i]\n";
+        print "\tKey?: $fieldKeys[$i]\n";
+        print "\tLength: $fieldLength[$i]\n";
+      }
+
+=item B<ListSelectedFields>
+
+    $ref = $sth->func( '_ListSelectedFields' );
+
+C<ListSelectedFields> is a similar function to C<ListFields>, except, where
+C<ListFields> lists the fields for a given table within the current database,
+C<ListSelectedFields> lists the field information for the fields present in
+a B<SELECT> statement handle. This is primarily used for extracting 
+meta-data about the current C<sth>.
+
+The usage of C<ListSelectedFields> is identical to C<ListFields>.
+
+=item C<NumRows>
+
+    $numRows = $sth->func( '_NumRows' );
+
+The C<NumRows> private method returns the number of rows affected by a
+B<SELECT> statement. This functionality was introduced prior to it becoming
+a standard within the DBI interface itself, where the number of rows affected
+by a B<SELECT> may be obtained by checking the return value of the 
+C<$sth->execute> method.
+
+=back
+
+=head2 DBD::mSQL Database Manipulation
+
+=over 4
+
+=item B<CreateDB>
+
+    $rc = $drh->func( $database, '_CreateDB' );
+    $rc = $drh->func( $database, '_DropDB' );
+
+These two methods allow programmers to create and drop databases from DBI
+scripts. Since mSQL disallows the creation and deletion of databases over
+the network, these methods explicitly connect to the mSQL daemon running
+on the machine C<localhost> and execute these operations there.
+
+It should be noted that database deletion is I<not prompted for> in any way.
+Nor is it undo-able from DBI.
+
+    Once you issue the dropDB() method, the database will be gone!
+
+These methods should be used at your own risk.
+
+=back
+
+=head1 AUTHOR
+
+B<DBD::mSQL> has been primarily written by Alligator Descartes <I<descarte@hermetica.com>>,
+who has been aided and abetted by Gary Shea, Andreas Koenig and Tim Bunce
+amongst others. Apologies if your name isn't listed, it probably is in
+the file called 'Acknowledgments'.
+
+=head1 COPYRIGHT
+
+This module is Copyright (c)1994-1997 Alligator Descartes, with code portions
+Copyright (c)1994-1997 their original authors. This module is released under
+the 'Artistic' license which you can find in the perl distribution.
+
+This document is Copyright (c)1997 Alligator Descartes. All rights reserved.
+Permission to distribute this document, in full or in part, via email,
+Usenet, ftp archives or http is granted providing that no charges are involved,
+reasonable attempt is made to use the most current version and all credits
+and copyright notices are retained ( the I<AUTHOR> and I<COPYRIGHT> sections ).
+Requests for other distribution rights, including incorporation into 
+commercial products, such as books, magazine articles or CD-ROMs should be
+made to Alligator Descartes <I<descarte@hermetica.com>>.
+
+=head1 Additional DBI Information
+
+Additional information on the DBI project can be found on the World Wide Web
+at the following URL:
+
+    http://www.hermetica.com/technologia/perl/DBI
+
+where documentation, pointers to the mailing lists and mailing list archives
+and pointers to the most current versions of the modules can be used.
+
+Information on the DBI interface itself can be gained by typing:
+
+    perldoc DBI
+
+right now!
+
+=cut
+
     require DBI;
 
     require DynaLoader;
     @ISA = qw(DynaLoader);
 
-	$VERSION = "0.65";
+	$VERSION = "0.66";
 
     bootstrap DBD::mSQL;
 
