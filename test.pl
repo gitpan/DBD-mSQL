@@ -6,7 +6,7 @@ use DBI;
 # - test. Otherwise, this script will use the first database picked up by
 # - ListDBs as a test database.
 
-#$test_dbname = 'test';
+#$test_dbname = '';
 
 # Uncomment this line and set 'testmachine' to the hostname of the the
 # - machine running the mSQL daemon that you wish to use as a test. Otherwise,
@@ -15,7 +15,7 @@ use DBI;
 #$test_hostname = 'alma';
 
 if ( !defined $test_hostname ) {
-    $test_hostname = '';
+    $test_hostname = 'localhost';
   }
 
 print "Testing: DBI->install_driver( 'mSQL' ): ";
@@ -28,7 +28,8 @@ print "Testing: \$drh->func( '$test_hostname', '_ListDBs' ): ";
     and print( "ok\n" )
     or die "not ok: $DBI::errstr\n";
 
-# A small test loop showing the databases on this server....
+# A small test loop showing the databases on this server....Uncomment this 
+# - chunk if you're the curious type.
 #
 #foreach $db ( @databases ) {
 #    print "db: $db\n";
@@ -55,7 +56,11 @@ print "Re-testing: \$drh->connect( '$test_hostname', '$test_dbname'): ";
 print "Testing: \$dbh->func( '_ListTables' ): ";
 ( @tables = $dbh->func( '_ListTables' ) )
     and print( "ok\n" )
-    or die "not ok: $DBI::errstr\n";
+    or print "not ok: $DBI::errstr\n";
+
+if ( !defined @tables ) {
+    @tables = ( 'rubbish' );
+  }
 
 # A small test loop showing the results from _ListTables. Uncomment if you're
 # - the curious type.
@@ -105,6 +110,24 @@ print "Re-testing: \$dbh->do( 'CREATE TABLE $testtable
     and print( "ok\n" )
     or die "not ok: $DBI::errstr\n";
 
+# List the fields of the table we've just created in here.....
+
+print "Testing: \$dbh->func( $testtable, '_ListFields' ): ";
+( $ref = $dbh->func( $testtable, '_ListFields' ) )
+    and print( "ok\n" )
+    or die "not ok: $DBI::errstr\n";
+
+# List the fields. Uncomment this if you're the curious type........
+#
+# print "NumFields: $ref->{NUMFIELDS}\n";
+# @fields = @{ $ref->{NAME} };
+# @types = @{ $ref->{TYPE} };
+# @nullable = @{ $ref->{IS_NOT_NULL} };
+# @primarykey = @{ $ref->{IS_PRI_KEY} };
+# for ( $i = 0 ; $i < $ref->{NUMFIELDS} ; $i++ ) {
+#     print "Field: $fields[$i]\tType: $types[$i]\tNullable: $nullable[$i]\tPrimaryKey: $primarykey[$i]\n";
+#   }
+
 print "Testing: \$dbh->do( 'INSERT INTO $testtable VALUES ( 1, 'Alligator Descartes' )' ): ";
 ( $dbh->do( "INSERT INTO $testtable VALUES( 1, 'Alligator Descartes' )" ) )
     and print( "ok\n" )
@@ -149,7 +172,16 @@ print "Re-testing: \$cursor = \$dbh->prepare( 'SELECT FROM $testtable WHERE id =
     and print( "ok\n" )
     or die "not ok: $DBI::errstr\n";
 
-print "Re-esting: \$cursor->execute: ";
+print "Testing: \$cursor->func( '_NumRows' ): ";
+( $numrows = $cursor->func( '_NumRows' ) )
+    and print( "ok\n" )
+    or die "not ok: $DBI::errstr\n";
+
+# For the curious, uncomment the next chunk of code
+#
+print "Rows returned should be: 1\nActual rows returned: $numrows\n";
+
+print "Re-testing: \$cursor->execute: ";
 ( $cursor->execute )
     and print( "ok\n" )
     or die "not ok: $DBI::errstr\n";
@@ -177,4 +209,8 @@ print "Re-testing: \$dbh->do( 'DROP TABLE $testtable' ): ";
     and print( "ok\n" )
     or die "not ok: $DBI::errstr\n";
 
-print "*** Testing of DBD::mSQL complete! You appear to be normal! ***\n";
+if ( $ENV{LOGNAME} eq 'k' ) {
+    print "*** Testing of DBD::mSQL complete! You're totally abnormal, Andreas!\n";
+  } else {
+    print "*** Testing of DBD::mSQL complete! You appear to be normal! ***\n";
+  }

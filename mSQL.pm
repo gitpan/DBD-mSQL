@@ -25,14 +25,6 @@
 	return $drh if $drh;
 	my($class, $attr) = @_;
 
-	unless ($ENV{'MSQL_HOME'}){
-	    foreach(qw(/usr/local/Minerva /opt/msql /opt/Minerva)){
-		$ENV{'MSQL_HOME'}=$_,last if -d "$_/rdbms/lib";
-	    }
-	    my $msg = ($ENV{MSQL_HOME}) ? "set to $ENV{MSQL_HOME}" : "not set!";
-	    warn "MSQL_HOME $msg\n";
-	}
-
 	$class .= "::dr";
 
 	# not a 'my' since we use it above to prevent multiple drivers

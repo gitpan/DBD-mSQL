@@ -26,7 +26,6 @@ MODULE = DBD::mSQL	PACKAGE = DBD::mSQL
 BOOT:
     items = 0;	/* avoid 'unused variable' warning */
     DBISTATE_INIT;
-#    fprintf( stderr, "Bootstrapping mSQL-0.60pl1 ** Disney release\n(c)1995 Alligator Descartes <descarte@mcqueen.com>\n(c)1994-1995 Portions by Tim Bunce <Tim.Bunce@ig.co.uk>\nMuch thanks to Andreas Koenig <k@anna.mind.de>\n\n" );
     /* XXX tis interface will change: */
     DBI_IMP_SIZE("DBD::mSQL::dr::imp_data_size", sizeof(imp_drh_t));
     DBI_IMP_SIZE("DBD::mSQL::db::imp_data_size", sizeof(imp_dbh_t));
@@ -71,7 +70,7 @@ _ListDBs(drh, host)
     if ( sock != -1 ) {
         res = msqlListDBs( sock );
         if ( !res ) {
-            warn( "Error!\n" );
+            do_error( -1, msqlErrMsg );
           } else {
             while ( ( cur = msqlFetchRow( res ) ) ) {
                 EXTEND( sp, 1);
@@ -81,6 +80,47 @@ _ListDBs(drh, host)
         msqlFreeResult( res );
         msqlClose( sock );
       }
+
+
+void
+_CreateDB(drh, host, dbname)
+    SV *        drh
+    char *      host
+    char *      dbname
+    PPCODE:
+    int sock;
+    sock = msqlConnect( host );
+    if ( sock != -1 ) {
+        if ( msqlCreateDB(sock,dbname) != -1 ) {
+            EXTEND( sp, 1 );
+            PUSHs( sv_2mortal((SV*)newSVpv( "OK", 2 )));
+          } else {
+            do_error( -1, msqlErrMsg );
+          }
+      } else {
+        do_error( -1, msqlErrMsg );
+      }
+
+
+void
+_DropDB(drh, host, dbname)
+    SV *        drh
+    char *      host
+    char *      dbname
+    PPCODE:
+    int sock;
+    sock = msqlConnect( host );
+    if ( sock != -1 ) {
+        if ( msqlDropDB(sock,dbname) != -1 ) {
+            EXTEND( sp, 1 );
+            PUSHs( sv_2mortal((SV*)newSVpv( "OK", 2 )));
+          } else {
+            do_error( -1, msqlErrMsg );
+          }
+      } else {
+        do_error( -1, msqlErrMsg );
+      }
+
 
 MODULE = DBD::mSQL    PACKAGE = DBD::mSQL::db
 
@@ -119,15 +159,19 @@ _ListFields(dbh, tabname)
     AV * avnnl;
     AV * avtab;
     AV * avtyp;
-    char *	package = "DBD::mSQL::db::_ListFields";
     res = msqlListFields( imp_dbh->lda.svsock, tabname );
     if ( !res ) {
-        warn( "Error in msqlListTables!\n" );
+        warn( "Error in msqlListFields!\n" );
       } else {
         hv = (HV*)sv_2mortal((SV*)newHV());
         hv_store(hv,"NUMROWS",7,(SV *)newSViv((IV)msqlNumRows(res)),0);
         hv_store(hv,"NUMFIELDS",9,(SV *)newSViv((IV)msqlNumFields(res)),0);
         msqlFieldSeek(res,0);
+        avkey = (AV*)sv_2mortal((SV*)newAV());
+	avnam = (AV*)sv_2mortal((SV*)newAV());
+	avnnl = (AV*)sv_2mortal((SV*)newAV());
+        avtab = (AV*)sv_2mortal((SV*)newAV());
+	avtyp = (AV*)sv_2mortal((SV*)newAV());
         while ( ( curField = msqlFetchField( res ) ) ) {
             av_push(avnam,(SV*)newSVpv(curField->name,strlen(curField->name)));
             av_push(avtab,(SV*)newSVpv(curField->table,strlen(curField->table)));
@@ -142,7 +186,7 @@ _ListFields(dbh, tabname)
         rv = newRV((SV*)avnnl); hv_store(hv,"IS_NOT_NULL",11,rv,0);
         hv_store(hv,"RESULT",6,(SV *)newSViv((IV)res),0);
         rv = newRV((SV*)hv);
-        stash = gv_stashpv(package, TRUE);
+        XPUSHs((SV*)rv);
       }
     msqlFreeResult( res );
 
@@ -235,6 +279,15 @@ DESTROY(dbh)
 
 
 MODULE = DBD::mSQL    PACKAGE = DBD::mSQL::st
+
+void
+_NumRows(sth)
+    SV *	sth
+    PPCODE:
+    D_imp_sth(sth);
+    EXTEND( sp, 1 );
+    PUSHs( sv_2mortal((SV*)newSViv(imp_sth->row_num)));
+
 
 void
 _prepare(sth, statement)

@@ -1,3 +1,16 @@
+0.60pl8
+
+	o Added error string and number to 'func' methods
+
+	o Completed implementation of 'ListFields' invoked through the
+	  'func' method
+
+	o Added implementation of 'CreateDB' and 'DropDB' through the
+	  'func' method
+
+	o Added a method 'NumRows' against $sth to show the number of
+	  rows returned by a statement.
+
 0.60pl7
 
 	o Fixed $DBI::errnum/$DBI::errstr problems, ie, it wasn't being 

@@ -16,7 +16,7 @@ use DBI;	# The DBI must be installed before we can build a DBD
 
 %opts = (
     'NAME'    => 'DBD::mSQL',
-    'VERSION' => '0.60pl7',
+    'VERSION' => '0.60pl8',
 );
 
 # Options, typically only used for debugging
@@ -28,6 +28,9 @@ use DBI;	# The DBI must be installed before we can build a DBD
 
 print "\nConfiguring DBD::mSQL version $opts{VERSION}...\n";
 print "Remember to actually read the README file!\n\n";
+print "And YES, I REALLY MEAN READ IT!\n\n";
+print "Hints, tips, ramblings at:\n\n";
+print "\t\thttp://www.hermetica.com/technologia/DBI\n\n";
 
 # --- Where is mSQL installed...
 

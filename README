@@ -53,6 +53,10 @@ Testing: The test program auto-searches your local mSQL databases for a
          test software does not discriminate between working databases and
          development ones!
 
+	 Also note! The methods to create and drop table are no exercised in
+         the main test.pl script. Look in the extratests directory for those
+	 test scripts.
+
 If the message at the end of testing:
 
 	** Testing of DBD::mSQL complete! You appear to be normal! ***
@@ -92,6 +96,10 @@ descarte@hermetica.com.  Please include:
 
 6. If you are not currently subscribed to the mailing list please
    also send a subscription request to dbi-users-request@fugue.com.
+
+   Also, you can subscribe to the DBI Mailing Lists at:
+
+	http://www.fugue.com/dbi
 
 Regards,
 Tim & Al.

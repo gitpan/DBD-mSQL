@@ -110,3 +110,12 @@ DBD::mSQL for DBI - Written by Alligator Descartes <descarte@mcqueen.com>
 05/11/95:11:32	Fixed $sth->readblob to return undef. Fixed Makefile.PL, 
 		dbdimp.h, mSQL.h, dbdimp.c for release of 0.60pl7. Also tested
 		'make test' which now works!
+
+23/11/95:19:22	Fixed ListFields from the pointers given to me by Sven V.
+
+24/11/95:03:13	Fixed error handling in all the func methods
+
+24/11/95:13:01	Added 'NumRows' method to statement handles to return the
+		number of rows returned ( or affected ) by a statement.o
+
+		pre-release distributed to ANDK

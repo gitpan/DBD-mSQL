@@ -22,6 +22,7 @@ Acknowledgements on the production and testing of DBD::mSQL
 	o Sven Verdoolaege <skimo@ufsia.ac.be>
 
           - for pointing out *far* too many bugs and plenty of patching.
+	  - fixing 'ListFields' function to have hashes returned.
 
 	o Marti Rijken 
 
