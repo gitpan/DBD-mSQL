@@ -1,0 +1,28 @@
+0.60pl7
+
+	o Fixed $DBI::errnum/$DBI::errstr problems, ie, it wasn't being 
+	  returned back into the invoking program.
+
+	  ( Thanks to Sven Verdoolaege for the patches )
+
+	o Fixed DROP, DELETE &c blah. Missing '= 1' variable set.
+
+	  ( Thanks again to SV )
+
+	o Added ListDBs and ListTables to the driver via the
+	  'func' method. ListFields is still under implementation. ( By the
+	  next full version )
+
+	o Rewrote the test script to execise the whole driver. ( Should keep
+	  Andreas happy! 8-) ). The test still needs to exercise multiple
+	  simultaneous database connections and cursors, but we'll wworry about
+	  that in the next release.
+
+	o Tidied up stray declarations in the includes, so we have warning-free
+	  compiles ( hopefully! )
+
+	o Tidied up Makefile.PL to remove all the Oracle-isms from the code.
+
+	o Fixed \$sth->readblob method to return undef.
+
+	o Removed old Msqlperl tests to stop confusing people......

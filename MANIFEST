@@ -1,0 +1,15 @@
+Acknowledgements
+ChangeLog
+Changes
+MANIFEST
+Makefile.PL
+README
+ToDo
+blib/DBD/.exists
+blib/auto/DBD/mSQL/.exists
+dbdimp.c
+dbdimp.h
+mSQL.h
+mSQL.pm
+mSQL.xs
+test.pl

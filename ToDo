@@ -1,0 +1,11 @@
+
+ToDO for DBD::mSQL -- A DBI driver for mSQL databases.
+
+(c)1995 Alligator Descartes <descarte@hermetica.com>
+
+v.0.60pl7
+---------
+
+	o Multiple database/cursor connections needs tested more thoroughly.
+	o ListFields primitive needs added.
+	o msqlCreateDB, msqlDropDB needs implemented.

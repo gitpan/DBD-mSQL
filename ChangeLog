@@ -1,0 +1,112 @@
+DBD::mSQL for DBI - Written by Alligator Descartes <descarte@mcqueen.com>
+
+18/07/95:	Started. 
+
+		Version 0.0.0 ( Totally pre-alpha! )
+
+19/07/95:22:00	Code now basically seems to work. I've got connection to
+		a database, and clean disconnection.
+
+	 23:45	I'm now working on the statement cycle stuff, which I've
+		mapped out. It's just a case of coding, which shouldn't
+		take too long, hopefully.
+
+		Posted notice of approaching doom to perldb-interest.
+
+20/07/95:01:25	Fetching appears to work OK now. I need to read the API on
+		msqlFieldSeek, since I can't work out why fetch is returning
+		the same row over and over! 
+
+21/07/95:09:22  Added a field into imp_sth (currow) which keeps track of the
+                current row that's been fetched from the result struct. If I
+                can fix the return codes coming from fetchrow, it'll work!
+
+21/07/95:10:30  Pondered bind variables in cursors. Since there isn't a bind
+                function in the API, I may have to frig the way that prepare/
+                execute works, ie, move the call to msqlQuery *after* it's
+                done some parsing for bind values......Hm.
+
+21/07/95:10:35  Twiddled some bits in the fetchrow cycle. 
+
+23/07/95:15:50  Fetch is fetching a row, but it's not returning it to the 
+        	calling cycle, so I need to fart about with the sv stuff, which
+		is not amusing me greatly!
+
+26/07/95:23:42	Decided in agreement with Andreas that the first release is
+		to be 0.61! 
+
+27/07/95:14:14	Finally! It fucking works! After splendid quantities of
+      		hacking around with the prepare/execute/fetchrow/finish cycle
+		it's actually returning rows correctly!
+
+		NOTE: The SV handling within dbd_describe is shot to buggery,
+		      but I've kludged it in mSQL.xs::fetchrow to do a
+		      sv_2mortal instead of a sv_mortalcopy.
+
+27/07/95:14:22	Tidied up mSQL.xs::finish to do an msqlFreeResult. Annoyingly
+		enough, there's no return code to msqlFR, so I can't test 
+		whether or not it's worked! Bah!
+
+27/07/95:15:15	Altered test to do several bits and bobs. I'm testing INSERT
+		statements now. These only execute an msqlQuery, but the
+		stuff needs to continue to pass through the execute and finish
+		stages cleanly.......*sigh*
+
+27/07/95:15:22	My dubious 'INSERT' check hack works, sort of. Pity it converts
+		the entire statement to lower case.....! 
+
+27/07/95:17:33	Twiddled some more stuff so it seems to do CREATE TABLE,
+		INSERT statements too. Of course, there's no error checking
+		yet, but it seems to be OK........Hm.
+
+27/07/95:17:38	Mailed out a statement saying the 0.61 code would be up for
+		grabs as of Monday 31st July! Still waiting on Alpha reports.
+
+27/07/95:12:11	Fixed the lower-case all the INSERT/CREATE &c. statement bug.
+		It now checks to see if you're in quotes.
+
+28/07/95:xx:xx	Got a report back from Andreas to say  compilation barfs on
+		his Indy. Fixed a load of do_error bugs in dbdimp.c. 
+
+13/08/95:18:25  Finally got back to this after a rather long break. Fixed some
+		Makefile.PL bugs that were kicking about. Finally fixed
+		( or appeared to fix ) the strlen signedness bug in dbdimp.c
+		that may halt compilation on the Indy. 
+
+		Emailed Karsten the debug info to see what's causing problems
+		on the NeXTStep platform.
+
+14/08/95:13:48	Got email back from Andreas. signedness broke mSQL.xs as well!
+		Fixed that and emailed him a quick patch.
+
+14/08/94:14:45	Andreas now has a successful compile. The tests are crap, but
+		appear to ( sort of ) work.
+
+29/08/95:23:18	Converted driver across to new DBI format. It now appears
+		to compile, install and run fairly reasonably. There are
+		some serious messes that need cleared up in it, but it's
+		fundamentally OK, I hope. Announced for pl0 testing.
+
+04/09/95:15:04	Started back on getting the 0.60pl0 out. Tidied up the parsing
+   		of statements for INSERT, CREATE &c statements. It just takes
+		the first word of the statement now.
+
+04/09/95:15:19	Looks OK. Tested against DBI 0.63 and looks reasonable.
+		Announced release of 0.60pl1 and put up for ftp.
+
+20/09/95:15:20	Patched a load of stuff including NULLs, and local device
+		handling ( SV ). Released pl4, which was bogus. Released
+		pl5 which should fix those issues.
+
+20/09/95:22:17	Fixed overhang of old DBI bug with DBIc_ENDING remaining in
+		DESTROY in mSQL.xs. Spotted by Marti Rijken and fixed.
+		( Hopefully! )
+
+18/10/95:15:13	Added in the missing API chunks for ListTables, ListDBs
+		and ListFields.
+
+		ListFields isnae working, but I'll fix that sometime soon....
+
+05/11/95:11:32	Fixed $sth->readblob to return undef. Fixed Makefile.PL, 
+		dbdimp.h, mSQL.h, dbdimp.c for release of 0.60pl7. Also tested
+		'make test' which now works!
