@@ -13,6 +13,7 @@ extratests/createdrop.pl
 extratests/cursortest.pl
 extratests/selectdbtest.pl
 extratests/testMsqlperl.pl
+extratests/nulltest.pl
 mSQL.h
 mSQL.pm
 mSQL.pm.pre-install

@@ -26,7 +26,7 @@ use DBI 0.71;	# The DBI must be installed before we can build a DBD
 
 %opts = (
     'NAME'    => 'DBD::mSQL',
-    'VERSION' => '0.61',
+    'VERSION' => '0.62',
 );
 
 # --- Introduction

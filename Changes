@@ -1,4 +1,8 @@
 
+0.62
+
+    o Patched bug that makes NULL be returned as undef
+
 0.61
 	o Added code to plug some memory leaks
 	o Added experimental Msqlperl emulation

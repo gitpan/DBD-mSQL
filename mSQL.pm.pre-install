@@ -13,7 +13,7 @@
     require DynaLoader;
     @ISA = qw(DynaLoader);
 
-	$VERSION = "0.61";
+	$VERSION = "0.62";
 
     bootstrap DBD::mSQL;
 

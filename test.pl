@@ -213,6 +213,45 @@ print "Re-testing: \$cursor->func( '_NumRows' ) after execute.\n";
     and print( "\tok\n" )
     or print "\tnot ok: $DBI::errstr\n";
 
+print "Re-testing: \$cursor->finish\n";
+( $cursor->finish )
+    and print( "\tok\n" )
+    or print "\tnot ok: $DBI::errstr\n";
+
+### Test whether or not a field containing a NULL is returned correctly
+### as undef, or something much more bizarre
+print "Testing: \$cursor->do( 'INSERT INTO $testtable VALUES ( NULL, 'NULL-valued ID' )' )\n";
+( $rv = $dbh->do( "INSERT INTO $testtable VALUES ( NULL, 'NULL-valued id' )" ) )
+    and print( "\tok\n" )
+    or die "\tnot ok: $DBI::errstr\n";
+
+print "Testing: \$cursor = \$dbh->prepare( 'SELECT id FROM $testtable WHERE id = NULL' )\n";
+( $cursor = $dbh->prepare( "SELECT id FROM $testtable WHERE id = NULL" ) )
+    and print "\tok\n"
+    or die "\tnot ok: $DBI::errstr\n";
+
+$cursor->execute;
+
+print "Testing: \$cursor->fetchrow\n";
+( ( $rv ) = $cursor->fetchrow )
+    and print "\tok\n"
+    or print "\tnot ok: $DBI::errstr\n";
+
+if ( !defined $rv ) {
+    print "\ttest passes. NULL value returned as undef\n";
+  } else {
+    print "\ttest failed. NULL value returned as $rv\n";
+  }
+
+print "Testing: \$cursor->finish\n";
+( $cursor->finish )
+    and print "\tok\n"
+    or print "\tnot ok\n";
+
+### Delete the test row from the table
+$rv = 
+    $dbh->do( "DELETE FROM $testtable WHERE id = NULL AND name = 'NULL-valued id'" );
+
 ### Test the new funky routines to list the fields applicable to a SELECT
 ### statement, and not necessarily just those in a table...
 print "Testing: \$cursor->func( '_ListSelectedFields' )\n";

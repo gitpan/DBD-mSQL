@@ -427,8 +427,11 @@ fetchrow(sth)
                     fbh->rlen );
           }
         SvCUR( fbh->sv ) = fbh->rlen;
-/*        sv = sv_mortalcopy( fbh->sv ); */
-        sv = sv_2mortal( newSVpv( (char *)fbh->cbuf, fbh->rlen ) );
+        if ( fbh->rlen == 0 && fbh->cbuf[0] == '\0' ) {   /** Assume NULL */
+            sv = &sv_undef;
+          } else {
+            sv = sv_2mortal( newSVpv( (char *)fbh->cbuf, fbh->rlen ) );
+          }
         PUSHs(sv);
       }
     imp_sth->currow++;
