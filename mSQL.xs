@@ -159,6 +159,7 @@ _ListFields(dbh, tabname)
     AV * avnnl;
     AV * avtab;
     AV * avtyp;
+    AV * avlength;
     res = msqlListFields( imp_dbh->lda.svsock, tabname );
     if ( !res ) {
         warn( "Error in msqlListFields!\n" );
@@ -172,18 +173,21 @@ _ListFields(dbh, tabname)
 	avnnl = (AV*)sv_2mortal((SV*)newAV());
         avtab = (AV*)sv_2mortal((SV*)newAV());
 	avtyp = (AV*)sv_2mortal((SV*)newAV());
+        avlength = (AV*)sv_2mortal((SV*)newAV());
         while ( ( curField = msqlFetchField( res ) ) ) {
             av_push(avnam,(SV*)newSVpv(curField->name,strlen(curField->name)));
             av_push(avtab,(SV*)newSVpv(curField->table,strlen(curField->table)));
             av_push(avtyp,(SV*)newSViv(curField->type));
             av_push(avkey,(SV*)newSViv(IS_PRI_KEY(curField->flags)));
             av_push(avnnl,(SV*)newSViv(IS_NOT_NULL(curField->flags)));
+            av_push(avlength,(SV*)newSViv(curField->length));
           }
         rv = newRV((SV*)avnam); hv_store(hv,"NAME",4,rv,0);
         rv = newRV((SV*)avtab); hv_store(hv,"TABLE",5,rv,0);
         rv = newRV((SV*)avtyp); hv_store(hv,"TYPE",4,rv,0);
         rv = newRV((SV*)avkey); hv_store(hv,"IS_PRI_KEY",10,rv,0);
         rv = newRV((SV*)avnnl); hv_store(hv,"IS_NOT_NULL",11,rv,0);
+        rv = newRV((SV*)avlength); hv_store(hv,"LENGTH",6,rv,0);
         hv_store(hv,"RESULT",6,(SV *)newSViv((IV)res),0);
         rv = newRV((SV*)hv);
         XPUSHs((SV*)rv);

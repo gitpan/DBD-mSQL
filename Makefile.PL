@@ -7,6 +7,7 @@
 #				list
 # Karsten	10/08/95	Fixed missing space in $linkwith
 # Descartes	05/11/95	Cleaned the Oracle-isms out for 0.60pl7
+# descarte	30/12/95	Some more twiddles for 0.60pl9
 
 use ExtUtils::MakeMaker qw(&WriteMakefile $Verbose %att);
 use Getopt::Std;
@@ -16,13 +17,8 @@ use DBI;	# The DBI must be installed before we can build a DBD
 
 %opts = (
     'NAME'    => 'DBD::mSQL',
-    'VERSION' => '0.60pl8',
+    'VERSION' => '0.60pl9',
 );
-
-# Options, typically only used for debugging
-#$opt_m = '';		# path to proc.mk or oracle.mk file to read
-
-#getopts('m:') or die "Invalid arguments";
 
 # --- Introduction
 
@@ -39,7 +35,7 @@ unless ($ENV{MSQL_HOME}){
     foreach(qw(/usr/local/Minerva /usr/mSQL /opt/mSQL /usr/soft/mSQL)){
 	$ENV{MSQL_HOME}=$_,last if -d "$_/lib";
     }
-    die "Unable to determine \$MSQL_HOME!\n" unless $ENV{MSQL_HOME};
+    die "** Unable to determine \$MSQL_HOME!\n\n** Please set MSQL_HOME. This is used for building only...\n" unless $ENV{MSQL_HOME};
 }
 my $MH = $ENV{MSQL_HOME};
 
@@ -53,7 +49,7 @@ warn "Warning: mSQL library does not appear to be installed.\n"
 	unless -f "$MH/lib/libmsql.a"
 	   and -f "$MH/include/msql.h";
 
-# read list of libs that oracle requires (eg -lm -lnsl)
+# read list of libs that mSQL requires (eg -lm -lnsl)
 $sysliblist = "-L$MH/lib -lmsql -lm";
 print "mSQL sysliblist: $sysliblist\n";
 
@@ -63,6 +59,33 @@ if ( $Config{osname} eq 'solaris' ) {
   } else {
     $linkwith = "-L$MH/lib";
   }
+
+# Prompt for root ( or non-root ) install............
+
+open TTY, "/dev/tty" || die "Cannot open tty! Run in the foreground!\n";
+print "-> Is this installation a root install or non-root? [root/notroot] ";
+$blah = <TTY>;
+if ( $blah =~ /not/ ) {
+    print "You say you're a non-root install........\n";
+    $port = 4333;
+  } else {
+    print "You say you're a root install....\n";
+    $port = 1112;
+  }
+close TTY;
+
+print "Using port: $port as default\n";
+
+open MSQLPMIN, "./mSQL.pm.pre-install" || die "Cannot open mSQL.pm.pre-install: $!\n";
+open MSQLPMOUT, ">./mSQL.pm" || die "Cannot write to mSQL.pm: $!\n";
+while ( <MSQLPMIN> ) {
+    if ( /\%\%MSQL_TCP_PORT\%\%/ ) {
+        s/\%\%MSQL_TCP_PORT\%\%/$port/g;
+      }
+    print MSQLPMOUT "$_";
+  }
+close MSQLPMOUT;
+close MSQLPMIN;
  
 $opts{LIBS} = [ $sysliblist ];
 $opts{INC}  = "-I$MH/include -I$Config{archlib}/DBI";
@@ -76,7 +99,6 @@ $opts{DEFINE} = '-Wall -pedantic -Wno-comment -Wpointer-arith -Wcast-align'
 	if $Config{cc} eq 'gcc';	# Just me asking gcc to be paranoid.
 
 $opts{DEFINE} .= ' -Xa' if $Config{cc} eq 'clcc';	# CenterLine CC
-
 
 # log key platform information to help me help you quickly
 print "System: perl$] @Config{qw(myuname archname dlsrc)}\n";

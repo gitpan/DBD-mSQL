@@ -119,3 +119,12 @@ DBD::mSQL for DBI - Written by Alligator Descartes <descarte@mcqueen.com>
 		number of rows returned ( or affected ) by a statement.o
 
 		pre-release distributed to ANDK
+
+25/11/95:09:20	Real release released! No major problems reported.
+
+30/12/95:18:10	Altered mSQL.pm to allow for hostname:port style connections
+		to known remote port machines. Sets ENV var since the
+		msqlConnect API call doesn't support port arguments.
+
+30/12/95:18:15	Added 'length' key into the hash returned by ListFields, so
+		we can get the scale of the field.

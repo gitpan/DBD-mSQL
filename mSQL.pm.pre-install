@@ -34,7 +34,7 @@
 	    'Version' => $VERSION,
 	    'Err'    => \$DBD::mSQL::err,
 	    'Errstr' => \$DBD::mSQL::errstr,
-	    'Attribution' => 'mSQL DBD by Alligator Descartes',
+	    'Attribution' => 'DBD::mSQL by Alligator Descartes',
 	    });
 
 	$drh;
@@ -56,14 +56,28 @@
 
 	# create a 'blank' dbh
 
+        # Use local socket if host is '*'. Some people seem to use that?
+        
         $host = '' if ( $host eq '*' );
+
+        # Check for MSQL_TCP_PORT in the hostname. Format is:
+        #
+        #     hostname:port
+
+        if ( $host =~ /\:/ ) {
+            ( $host, $ENV{'MSQL_TCP_PORT'} ) = split( /\:/, $host );
+            print "Setting MSQL_TCP_PORT to $ENV{'MSQL_TCP_PORT'}\n";
+          } else {
+            print "Setting MSQL_TCP_PORT to default\n";
+            ( $host, $ENV{'MSQL_TCP_PORT'} ) = ( $host, %%MSQL_TCP_PORT%% );
+          }
 
 	my $this = DBI::_new_dbh($drh, {
             'Host' => $host,
 	    'Name' => $dbname
 	    });
 
-	# Call mSQL OCI orlon func in mSQL.xs file
+	# Call mSQL msqlConnect func in mSQL.xs file
 	# and populate internal handle data.
 
 	DBD::mSQL::db::_login($this, $host, $dbname)

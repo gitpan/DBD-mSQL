@@ -1,3 +1,11 @@
+0.60pl9
+
+	o Added 'length' key into the hash returned by func( '_ListFields' )
+
+	o Altered mSQL.pm to allow hostname:port style connection strings. This
+	  directly sets MSQL_TCP_PORT. If port isn't specified it unsets
+	  MSQL_TCP_PORT and you're in the lap of the gods.......
+
 0.60pl8
 
 	o Added error string and number to 'func' methods
